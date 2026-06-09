@@ -88,12 +88,136 @@ grep -R "lint-staged" templates/root-tooling/hooks templates/root-tooling/packag
 grep -R "prettier --check" templates/root-tooling/package templates/root-tooling/hooks >/dev/null \
   || fail "format check preset missing"
 
-log "checking Docker skeleton boundaries"
-docker_skeleton_count="$(find templates/docker-patterns -type f -name '*.tmpl' | wc -l | tr -d ' ')"
-[[ "$docker_skeleton_count" -ge 8 ]] || fail "expected at least 8 Docker pattern skeletons"
-[[ ! -f templates/docker-patterns/Dockerfile.tmpl ]] || fail "single shared Dockerfile skeleton is not allowed"
-grep -R "DESIGN-ONLY SKELETON" templates/docker-patterns >/dev/null \
-  || fail "Docker pattern skeletons must be marked design-only"
+log "checking Docker pattern template structure"
+python3 - "$ROOT" <<'PY'
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+required_files = {
+    "templates/docker-patterns/jvm/Dockerfile.jvm.tmpl": [
+        "FROM ${JVM_BUILD_IMAGE} AS build",
+        "FROM ${JVM_RUNTIME_IMAGE} AS runtime",
+        "{{jvm_dependency_resolution_command}}",
+        "{{jvm_build_command}}",
+        "{{runtime_user_create_command}}",
+        "COPY --from=build",
+        "USER ${APP_UID}:${APP_GID}",
+        "HEALTHCHECK",
+        "ENTRYPOINT",
+        "CMD",
+    ],
+    "templates/docker-patterns/jvm/Dockerfile.crac-jvm.tmpl": [
+        "FROM ${JVM_BUILD_IMAGE} AS build",
+        "FROM ${CRAC_RUNTIME_IMAGE} AS crac-base",
+        "FROM crac-base AS train",
+        "FROM crac-base AS runtime",
+        "{{checkpoint_dir}}",
+        "CRAC_MODE",
+        "VOLUME",
+        "HEALTHCHECK",
+    ],
+    "templates/docker-patterns/vue/Dockerfile.vue-build-runtime.tmpl": [
+        "FROM ${NODE_BUILD_IMAGE} AS deps",
+        "FROM deps AS build",
+        "FROM ${NGINX_RUNTIME_IMAGE} AS runtime",
+        "{{package_manager_install_command}}",
+        "{{frontend_build_command}}",
+        "COPY --from=build",
+        "HEALTHCHECK",
+    ],
+    "templates/docker-patterns/vue/Dockerfile.pnpm-build.tmpl": [
+        "FROM ${NODE_BUILD_IMAGE} AS deps",
+        "FROM deps AS build",
+        "FROM ${NGINX_RUNTIME_IMAGE} AS runtime",
+        "{{pnpm_bootstrap_command}}",
+        "pnpm install --frozen-lockfile",
+        "pnpm {{pnpm_build_filter}} {{frontend_build_script}}",
+        "COPY --from=build",
+        "HEALTHCHECK",
+    ],
+    "templates/docker-patterns/vue/Dockerfile.yarn-build.tmpl": [
+        "FROM ${NODE_BUILD_IMAGE} AS deps",
+        "FROM deps AS build",
+        "FROM ${NGINX_RUNTIME_IMAGE} AS runtime",
+        "corepack enable",
+        "yarn install --immutable",
+        "yarn {{frontend_build_script}}",
+        "COPY --from=build",
+        "HEALTHCHECK",
+    ],
+    "templates/docker-patterns/nginx/Dockerfile.privileged-nginx.tmpl": [
+        "FROM ${NGINX_RUNTIME_IMAGE} AS runtime",
+        "COPY {{nginx_config_path}}",
+        "COPY {{static_assets_dir}}",
+        "EXPOSE {{privileged_listen_port}}",
+        "HEALTHCHECK",
+        "CMD",
+    ],
+    "templates/docker-patterns/nginx/Dockerfile.unprivileged-nginx.tmpl": [
+        "FROM ${NGINX_RUNTIME_IMAGE} AS runtime",
+        "COPY --chown=${NGINX_UID}:${NGINX_GID}",
+        "USER ${NGINX_UID}:${NGINX_GID}",
+        "EXPOSE {{unprivileged_listen_port}}",
+        "HEALTHCHECK",
+        "CMD",
+    ],
+    "templates/docker-patterns/entrypoints/otel-entrypoint.sh.tmpl": [
+        "#!/usr/bin/env sh",
+        "set -eu",
+        "OTEL_RESOURCE_ATTRIBUTES",
+        "otel_agent_arg",
+        "exec \"$@\"",
+    ],
+    "templates/docker-patterns/entrypoints/crac-entrypoint.sh.tmpl": [
+        "#!/usr/bin/env sh",
+        "set -eu",
+        "case \"${mode}\" in",
+        "train)",
+        "restore)",
+        "run)",
+        "exec java",
+    ],
+}
+
+for rel, markers in required_files.items():
+    path = root / rel
+    if not path.exists():
+        raise SystemExit(f"missing Docker pattern template: {rel}")
+    text = path.read_text(encoding="utf-8")
+    if "DESIGN-ONLY SKELETON" in text:
+        raise SystemExit(f"Docker pattern template is still design-only: {rel}")
+    missing = [marker for marker in markers if marker not in text]
+    if missing:
+        raise SystemExit(f"{rel} missing structural markers: {', '.join(missing)}")
+
+template_count = len(list((root / "templates/docker-patterns").glob("**/*.tmpl")))
+if template_count < len(required_files):
+    raise SystemExit("expected all Docker pattern templates to be present")
+if (root / "templates/docker-patterns/Dockerfile.tmpl").exists():
+    raise SystemExit("single shared Dockerfile template is not allowed")
+
+placeholder_re = re.compile(r"\{\{[a-zA-Z0-9_]+\}\}")
+placeholders = set()
+for path in (root / "templates/docker-patterns").glob("**/*.tmpl"):
+    placeholders.update(placeholder_re.findall(path.read_text(encoding="utf-8")))
+
+docs = [
+    root / "templates/docker-patterns/README.md",
+    root / "specs/002-round4-docker-pattern-templates/data-model.md",
+]
+for doc in docs:
+    text = doc.read_text(encoding="utf-8")
+    missing = sorted(ph for ph in placeholders if ph not in text)
+    if missing:
+        raise SystemExit(f"{doc.relative_to(root)} missing placeholder docs: {', '.join(missing)}")
+PY
+
+log "checking Docker entrypoint shell syntax"
+for entrypoint_template in templates/docker-patterns/entrypoints/*.tmpl; do
+  sh -n "$entrypoint_template"
+done
 
 log "checking for source-specific values in templates"
 forbidden_pattern='jorisjonkers|esa-blueshell|blueshell|personal-stack|frankfurt-contabo|enschede|167\.86\.79\.203|130\.89\.174\.190|192\.168\.0\.99|auth-system|assistant-system|knowledge-system|media-system|utility-system|data-system|secret/data/platform|secret/platform|secret/agents|auth-api|assistant-api|knowledge-api|uptime-kuma|stalwart|rabbitmq|valkey|postgres'
