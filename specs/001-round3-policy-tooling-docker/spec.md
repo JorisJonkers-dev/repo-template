@@ -9,7 +9,7 @@
 
 ### User Story 1 - Dependency Policy Templates (Priority: P1)
 
-Repository maintainers can start from parameterized Dependabot, Renovate, dependency-review, Scorecard, and CodeQL templates that encode the ExtraToast dependency policy without inheriting source-repo-specific paths or domains.
+Repository maintainers can start from parameterized Dependabot, Renovate, dependency-review, Scorecard, and CodeQL templates that encode the JorisJonkers-dev dependency policy without inheriting source-repo-specific paths or domains.
 
 **Why this priority**: Dependency automation is a repo-onboarding policy and must be available before new repositories select their application stack.
 
@@ -18,7 +18,7 @@ Repository maintainers can start from parameterized Dependabot, Renovate, depend
 **Acceptance Scenarios**:
 
 1. **Given** a Gradle, Node, Docker, or GitHub Actions repository, **When** a maintainer fills the dependency-policy template parameters, **Then** generated update policy files group minor/patch updates and security updates while leaving major updates isolated.
-2. **Given** an ExtraToast shared-artifact consumer, **When** the optional shared-artifact grouping is enabled, **Then** packages matching `dev.extratoast`, `@extratoast`, and the reusable workflow repo can be grouped in one coherent update.
+2. **Given** an JorisJonkers-dev shared-artifact consumer, **When** the optional shared-artifact grouping is enabled, **Then** packages matching `dev.jorisjonkers`, `@jorisjonkers-dev`, and the reusable workflow repo can be grouped in one coherent update.
 
 ---
 
@@ -63,7 +63,7 @@ Platform maintainers can review design-first Dockerfile and entrypoint pattern s
 ### Functional Requirements
 
 - **FR-001**: System MUST provide parameterized Dependabot templates with 7-day cooldowns, grouped minor/patch updates, separate security groups, and major updates outside grouped version-update rules.
-- **FR-002**: System MUST provide parameterized Renovate templates with 7-day release age, grouped minor/patch updates, isolated major updates, lockfile maintenance, GitHub Actions digest pinning, and optional ExtraToast shared-artifact grouping.
+- **FR-002**: System MUST provide parameterized Renovate templates with 7-day release age, grouped minor/patch updates, isolated major updates, lockfile maintenance, GitHub Actions digest pinning, and optional JorisJonkers-dev shared-artifact grouping.
 - **FR-003**: System MUST provide dependency-review, Scorecard, CodeQL workflow templates, plus a CodeQL config template with configurable languages, build commands, and ignored generated paths.
 - **FR-004**: System MUST provide root dev-tooling template variants for pnpm and Yarn frontend repositories, including ESLint, Prettier, editorconfig, lint-staged, Husky, and gitleaks.
 - **FR-005**: System MUST provide docs/ADR layout templates including an ADR index, ADR file template, docs index, and domain-split ADR index option.

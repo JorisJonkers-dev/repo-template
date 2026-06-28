@@ -1,4 +1,4 @@
-# Canonical single CI workflow for every ExtraToast repository.
+# Canonical single CI workflow for every JorisJonkers-dev repository.
 #
 # Org convention: ONE pipeline per repo, and it terminates in a single
 # aggregating job named "Pipeline Complete". That job name is the ONLY
@@ -9,7 +9,7 @@
 #
 # Replace the placeholder `lint` / `test` / `coverage` / `build` jobs with the
 # real work for this repo (or call reusable workflows from
-# ExtraToast/github-workflows), but ALWAYS keep the final `pipeline-complete`
+# JorisJonkers-dev/github-workflows), but ALWAYS keep the final `pipeline-complete`
 # job and list every gating job in its `needs:`.
 name: CI
 
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - run: echo "replace with real lint (or a reusable workflow from ExtraToast/github-workflows)"
+      - run: echo "replace with real lint (or a reusable workflow from JorisJonkers-dev/github-workflows)"
 
   workflow-lint:
     name: Workflow Lint

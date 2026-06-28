@@ -4,9 +4,9 @@
 #   .github/workflows/platform-config-validate.yml
 #
 # The reusable workflow validates matching YAML files against
-# @extratoast/deploy-config-schema. Keep this workflow opt-in for repos that
-# actually carry platform/deploy config, and pin the reusable workflow to a
-# release tag instead of @main once a stable tag is available.
+# @jorisjonkers-dev/deploy-config-schema. Keep this workflow opt-in for repos that
+# actually carry platform/deploy config, and keep the reusable workflow pinned
+# to the migration release tag.
 name: Platform Config Validate
 
 on:
@@ -33,7 +33,7 @@ permissions:
 jobs:
   platform-config-validate:
     name: Platform Config Validate
-    uses: ExtraToast/github-workflows/.github/workflows/platform-config-validate.yml@main
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.6.0
     with:
       config-paths: |
         platform/**/*.yml
