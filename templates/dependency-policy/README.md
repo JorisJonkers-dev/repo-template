@@ -1,15 +1,15 @@
 # Dependency Policy Templates
 
 These templates are copied into target repositories during onboarding. Replace
-`{{...}}` placeholders with repo-specific values before committing them.
+any `{{...}}` placeholders with repo-specific values before committing them.
 
 Policy invariants:
 
-- Wait 7 days before proposing newly published versions.
-- Group minor and patch version updates.
-- Keep major version updates isolated.
-- Group security updates separately.
-- Optionally group ExtraToast shared artifacts into one coherent platform bump.
+- Renovate delegates to `github>JorisJonkers-dev/renovate-config`.
+- Dependabot waits 7 days before proposing newly published versions.
+- Dependabot groups minor and patch version updates.
+- Dependabot keeps security updates separate.
 
-`renovate.json.tmpl` is the default ExtraToast policy. `dependabot.yml.tmpl` is
-available for repos that use Dependabot directly or as a fallback.
+`renovate.json.tmpl` is the default JorisJonkers-dev preset entrypoint.
+`dependabot.yml.tmpl` is available for repos that use Dependabot directly or as
+a fallback.

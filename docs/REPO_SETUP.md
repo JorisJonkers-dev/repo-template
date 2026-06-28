@@ -1,15 +1,15 @@
-# Bootstrapping a new ExtraToast repo from this template
+# Bootstrapping a new JorisJonkers-dev repo from this template
 
 1. **Create the repo from the template** (GitHub "Use this template", or
-   `gh repo create ExtraToast/<name> --template ExtraToast/repo-template
+   `gh repo create JorisJonkers-dev/<name> --template JorisJonkers-dev/repo-template
    --private`).
 2. **Apply the branch ruleset** so `Pipeline Complete` is required:
    ```bash
-   scripts/apply-ruleset.sh ExtraToast/<name>
+   scripts/apply-ruleset.sh JorisJonkers-dev/<name>
    ```
 3. **Wire the real CI**: replace the placeholder `lint`/`test`/`coverage`/`build`
-   jobs in `.github/workflows/ci.yml` with this repo's actual jobs (or calls
-   into reusable workflows from `ExtraToast/github-workflows`). Keep the
+   jobs in `.github/workflows/ci.yml` with this repo's actual jobs, or copy the
+   nearest caller template from `templates/workflows/`. Keep the
    `pipeline-complete` aggregator and list every gating job in its `needs:`.
 4. **Wire the coverage gate**: every repo must enforce **>=80% line coverage**.
    - Gradle: apply JaCoCo and run `jacocoTestCoverageVerification` with a line
@@ -22,26 +22,29 @@
    public on this account, but verify package visibility after the first
    publish.
 6. **Set the starting version** in `.release-please-manifest.json`.
-7. **CODEOWNERS / README**: adjust owners and replace this README's body with
+7. **Install private-repo hooks** when GitHub branch protection is process-gated:
+   ```bash
+   scripts/install-git-hooks.sh
+   ```
+8. **CODEOWNERS / README**: adjust owners and replace this README's body with
    the repo's purpose.
-8. **Choose dependency policy depth**:
+9. **Choose dependency policy depth**:
    - Keep the root `renovate.json` and `.github/dependabot.yml` for the default
-     ExtraToast policy.
+     JorisJonkers-dev policy.
    - Copy richer stack-specific variants from `templates/dependency-policy/`
      when the repo needs Dependabot ecosystems, dependency-review, Scorecard, or
      advanced CodeQL setup.
-9. **Choose root tooling presets** from `templates/root-tooling/` when the repo
+10. **Choose root tooling presets** from `templates/root-tooling/` when the repo
    has frontend linting, local hooks, ADRs, or docs indexes.
-10. **Opt into platform/deploy config validation** only for repos that carry
+11. **Opt into platform/deploy config validation** only for repos that carry
     platform config: copy
     `templates/platform-config-validation/platform-config-validate.yml.tmpl` to
     `.github/workflows/platform-config-validate.yml`. It calls
-    `ExtraToast/github-workflows/.github/workflows/platform-config-validate.yml@main`
-    with `schema-kind: auto` and platform/deploy YAML globs. Pin the reusable
-    workflow ref to a release tag when one is available.
-11. **Review Docker pattern skeletons** in `templates/docker-patterns/` only as
+    `JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.6.0`
+    with `schema-kind: auto` and platform/deploy YAML globs.
+12. **Review Docker pattern skeletons** in `templates/docker-patterns/` only as
     design references. They are not production Dockerfiles.
-12. **Validate template assets**:
+13. **Validate template assets**:
     ```bash
     scripts/validate-templates.sh
     ```
@@ -57,10 +60,13 @@
 | `.github/ISSUE_TEMPLATE/*` | Bug / feature / task forms |
 | `.github/CODEOWNERS`, `dependabot.yml`, `renovate.json` | Ownership + dependency automation |
 | `templates/dependency-policy/` | Parameterized Dependabot, Renovate, dependency-review, Scorecard, and CodeQL policy templates |
+| `templates/release-please/` | Release-please config and manifest archetypes |
+| `templates/workflows/` | Reusable workflow caller templates pinned to `JorisJonkers-dev/github-workflows@v0.6.0` |
+| `scripts/install-git-hooks.sh`, `templates/push-protection/` | Private-repo pre-push and commit-msg hooks |
 | `templates/root-tooling/` | Root editor, prettier, ESLint, lint-staged, Husky, gitleaks, docs, and ADR presets |
-| `templates/platform-config-validation/` | Opt-in workflow template for `@extratoast/deploy-config-schema` validation |
+| `templates/platform-config-validation/` | Opt-in workflow template for `@jorisjonkers-dev/deploy-config-schema` validation |
 | `templates/docker-patterns/` | Design-only Dockerfile and entrypoint skeleton fixtures |
-| `scripts/validate-templates.sh` | Local validation for template syntax, policy invariants, and source-value leakage |
+| `scripts/validate-templates.sh` | Local validation for template syntax, pins, hooks, policy invariants, and source-value leakage |
 | `release-please-config.json`, `.release-please-manifest.json` | Versioning state |
 | `CONTRIBUTING.md`, `VERSIONING.md`, `SECURITY.md` | Conventions |
 | `.editorconfig`, `.gitignore`, `.gitleaks.toml`, `LICENSE` | Baseline hygiene |

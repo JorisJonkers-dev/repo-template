@@ -15,13 +15,23 @@ log() {
 }
 
 json_files=(
+  .github/rulesets/main.json
+  .release-please-manifest.json
+  release-please-config.json
   renovate.json
   templates/dependency-policy/renovate.json.tmpl
+  templates/release-please/simple.json.tmpl
+  templates/release-please/node.json.tmpl
+  templates/release-please/java-gradle.json.tmpl
+  templates/release-please/manifest-default.json.tmpl
+  templates/release-please/manifest-agents.json.tmpl
   templates/root-tooling/package/pnpm-package.json
   templates/root-tooling/package/yarn-package.json
   templates/root-tooling/hooks/lintstagedrc.json.tmpl
   templates/root-tooling/prettierrc.json.tmpl
 )
+
+workflow_template_files=(templates/workflows/*.yml.tmpl)
 
 log "checking JSON syntax"
 python3 - "$ROOT" "${json_files[@]}" <<'PY'
@@ -38,6 +48,8 @@ PY
 
 yaml_files=(
   .github/dependabot.yml
+  .github/workflows/ci.yml
+  .github/workflows/release.yml
   templates/dependency-policy/dependabot.yml.tmpl
   templates/dependency-policy/dependency-review.yml.tmpl
   templates/dependency-policy/scorecard.yml.tmpl
@@ -47,7 +59,7 @@ yaml_files=(
 )
 
 log "checking YAML syntax when a local parser is available"
-python3 - "$ROOT" "${yaml_files[@]}" <<'PY'
+python3 - "$ROOT" "${yaml_files[@]}" "${workflow_template_files[@]}" <<'PY'
 import importlib.util
 import pathlib
 import sys
@@ -68,18 +80,37 @@ PY
 log "checking dependency policy invariants"
 grep -R "default-days: 7" .github/dependabot.yml templates/dependency-policy/dependabot.yml.tmpl >/dev/null \
   || fail "Dependabot policy must include 7-day cooldown"
-grep -R "\"minimumReleaseAge\": \"7 days\"" renovate.json templates/dependency-policy/renovate.json.tmpl >/dev/null \
-  || fail "Renovate policy must include 7-day minimum release age"
 grep -R "update-types: \\[minor, patch\\]" templates/dependency-policy/dependabot.yml.tmpl >/dev/null \
   || fail "Dependabot template must group minor and patch updates"
-grep -R "\"matchUpdateTypes\": \\[\"minor\", \"patch\"\\]" renovate.json templates/dependency-policy/renovate.json.tmpl >/dev/null \
-  || fail "Renovate policy must group minor and patch updates"
 grep -R "security-updates" templates/dependency-policy/dependabot.yml.tmpl .github/dependabot.yml >/dev/null \
   || fail "Dependabot policy must group security updates"
-grep -R "vulnerabilityAlerts" templates/dependency-policy/renovate.json.tmpl >/dev/null \
-  || fail "Renovate template must enable vulnerability alerts"
-grep -R "extratoast shared artifacts" renovate.json templates/dependency-policy/renovate.json.tmpl >/dev/null \
-  || fail "Optional ExtraToast shared-artifact grouping missing"
+
+log "checking Renovate shared preset"
+python3 - "$ROOT" <<'PY'
+import json
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+expected = {
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["github>JorisJonkers-dev/renovate-config"],
+}
+for rel in ("renovate.json", "templates/dependency-policy/renovate.json.tmpl"):
+    actual = json.loads((root / rel).read_text(encoding="utf-8"))
+    if actual != expected:
+        raise SystemExit(f"{rel} must use the shared JorisJonkers-dev Renovate preset")
+PY
+
+log "checking release-please templates"
+grep -F '"bootstrap-sha": "a2095b6de581575eaa896eea056963889b893770"' release-please-config.json >/dev/null \
+  || fail "repo release-please config must carry the migration bootstrap sha"
+grep -R '"bootstrap-sha": "{{bootstrap_sha}}"' templates/release-please/*.json.tmpl >/dev/null \
+  || fail "release-please templates must expose bootstrap_sha"
+grep -F '{ ".": "0.1.0" }' templates/release-please/manifest-default.json.tmpl >/dev/null \
+  || fail "default release-please manifest template must start at 0.1.0"
+grep -F '{ ".": "0.16.0" }' templates/release-please/manifest-agents.json.tmpl >/dev/null \
+  || fail "agents release-please manifest template must start at 0.16.0"
 
 log "checking root tooling invariants"
 grep -R "config/detekt/detekt.yml" templates/root-tooling >/dev/null \
@@ -90,7 +121,7 @@ grep -R "prettier --check" templates/root-tooling/package templates/root-tooling
   || fail "format check preset missing"
 
 log "checking platform config validation template"
-grep -F "uses: ExtraToast/github-workflows/.github/workflows/platform-config-validate.yml@main" templates/platform-config-validation/platform-config-validate.yml.tmpl >/dev/null \
+grep -F "uses: JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.6.0" templates/platform-config-validation/platform-config-validate.yml.tmpl >/dev/null \
   || fail "platform config validation template must call the reusable workflow by ref"
 grep -F "schema-kind: auto" templates/platform-config-validation/platform-config-validate.yml.tmpl >/dev/null \
   || fail "platform config validation template must default schema-kind to auto"
@@ -98,6 +129,31 @@ grep -F "platform/**/*.yaml" templates/platform-config-validation/platform-confi
   || fail "platform config validation template must include platform YAML globs"
 grep -F "deploy/**/*.yaml" templates/platform-config-validation/platform-config-validate.yml.tmpl >/dev/null \
   || fail "platform config validation template must include deploy YAML globs"
+
+log "checking workflow caller templates"
+for rel in \
+  templates/workflows/jvm-lib-ci.yml.tmpl \
+  templates/workflows/jvm-service-ci.yml.tmpl \
+  templates/workflows/gradle-plugin-ci.yml.tmpl \
+  templates/workflows/ts-lib-ci.yml.tmpl \
+  templates/workflows/vue-app-ci.yml.tmpl \
+  templates/workflows/python-ci.yml.tmpl \
+  templates/workflows/nix-ci.yml.tmpl \
+  templates/workflows/gitops-ci.yml.tmpl; do
+  [[ -f "$rel" ]] || fail "missing workflow caller template: $rel"
+  grep -F "Pipeline Complete" "$rel" >/dev/null \
+    || fail "$rel must include the Pipeline Complete aggregator"
+  grep -F "re-actors/alls-green@release/v1" "$rel" >/dev/null \
+    || fail "$rel must aggregate reusable workflow jobs"
+  grep -E "JorisJonkers-dev/github-workflows/.github/workflows/.+@v0\\.6\\.0" "$rel" >/dev/null \
+    || fail "$rel must pin reusable workflows to v0.6.0"
+done
+if rg -n 'JorisJonkers-dev/github-workflows/.github/workflows/.+@(main|master|HEAD)' templates/workflows templates/platform-config-validation; then
+  fail "reusable workflow templates must not use moving refs"
+fi
+
+log "checking hook shell syntax"
+bash -n scripts/install-git-hooks.sh templates/push-protection/hooks/*
 
 log "checking Docker pattern template structure"
 python3 - "$ROOT" <<'PY'
@@ -231,7 +287,7 @@ for entrypoint_template in templates/docker-patterns/entrypoints/*.tmpl; do
 done
 
 log "checking for source-specific values in templates"
-forbidden_pattern='jorisjonkers|esa-blueshell|blueshell|personal-stack|frankfurt-contabo|enschede|167\.86\.79\.203|130\.89\.174\.190|192\.168\.0\.99|auth-system|assistant-system|knowledge-system|media-system|utility-system|data-system|secret/data/platform|secret/platform|secret/agents|auth-api|assistant-api|knowledge-api|uptime-kuma|stalwart|rabbitmq|valkey|postgres'
+forbidden_pattern='esa-blueshell|blueshell|personal-stack|frankfurt-contabo|enschede|167\.86\.79\.203|130\.89\.174\.190|192\.168\.0\.99|auth-system|assistant-system|knowledge-system|media-system|utility-system|data-system|secret/data/platform|secret/platform|secret/agents|auth-api|assistant-api|knowledge-api|uptime-kuma|stalwart|rabbitmq|valkey|postgres'
 if rg -n -i "$forbidden_pattern" templates; then
   fail "source-specific value found in templates"
 fi

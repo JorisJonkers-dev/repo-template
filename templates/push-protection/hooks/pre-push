@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+protected_regex="${PROTECTED_BRANCH_REGEX:-^refs/heads/main$}"
+allow="${ALLOW_PROTECTED_BRANCH_PUSH:-false}"
+status=0
+zero_sha="0000000000000000000000000000000000000000"
+
+while IFS= read -r _local_ref local_sha remote_ref _remote_sha; do
+  if [[ "$remote_ref" =~ $protected_regex && "$allow" != "true" ]]; then
+    echo "Direct push to ${remote_ref} is blocked. Open a PR or set ALLOW_PROTECTED_BRANCH_PUSH=true for break-glass." >&2
+    status=1
+  fi
+
+  if [[ "$local_sha" != "$zero_sha" ]]; then
+    tmp_file="$(mktemp "${TMPDIR:-/tmp}/legacy-refs.XXXXXX")"
+    if git grep -n -E 'ExtraToast|@extratoast|dev\.extratoast|ghcr\.io/extratoast' "$local_sha" -- . \
+      ':(exclude)CHANGELOG.md' ':(exclude)specs/**' \
+      ':(exclude)templates/push-protection/hooks/pre-push' >"$tmp_file" 2>/dev/null; then
+      cat "$tmp_file" >&2
+      echo "Legacy ExtraToast coordinate found in pushed content." >&2
+      status=1
+    fi
+    rm -f "$tmp_file"
+  fi
+done
+
+exit "$status"

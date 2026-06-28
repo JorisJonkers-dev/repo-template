@@ -7,5 +7,5 @@ Dependency policy templates must:
 - Group `minor` and `patch` version updates.
 - Group security updates separately.
 - Leave major updates outside routine version-update groups.
-- Support optional ExtraToast shared-artifact grouping without requiring every consumer to use ExtraToast package names.
+- Support optional JorisJonkers-dev shared-artifact grouping without requiring every consumer to use JorisJonkers-dev package names.
 - Avoid hardcoded source-repo domains, hostnames, namespaces, image prefixes, queue/exchange names, paths, IPs, and vendor URLs.

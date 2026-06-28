@@ -1,6 +1,6 @@
 # repo-template
 
-The template every [ExtraToast](https://github.com/ExtraToast) repository is
+The template every [JorisJonkers-dev](https://github.com/JorisJonkers-dev) repository is
 bootstrapped from. It carries the org's shared conventions so each repo starts
 aligned instead of re-inventing CI, rulesets, templates, and release flow.
 
@@ -13,13 +13,20 @@ aligned instead of re-inventing CI, rulesets, templates, and release flow.
   (`.github/rulesets/main.json`, `scripts/apply-ruleset.sh`)
 - **Tag → release versioning** via release-please, with exact-pin consumption
   and version-pinned deploys. (`release.yml`, `VERSIONING.md`)
-- **Renovate** for exact-version dependency bumps (ExtraToast artifacts grouped).
+- **Release-please archetype templates** for simple, Node, and Gradle repos.
+  (`templates/release-please/`)
+- **Reusable workflow caller templates** for JVM, Node, Python, Nix, Dockerized
+  services, and GitOps repos. (`templates/workflows/`)
+- **Private-repo push-protection hooks** for direct-main-push blocking and
+  Conventional Commit enforcement. (`scripts/install-git-hooks.sh`,
+  `templates/push-protection/`)
+- **Renovate** via the shared JorisJonkers-dev preset.
 - **Dependency policy templates** for Dependabot, Renovate, dependency-review,
   Scorecard, and CodeQL. (`templates/dependency-policy/`)
 - **Root tooling and docs presets** for frontend lint/format hooks, gitleaks,
   ADR layout, and docs indexes. (`templates/root-tooling/`)
 - **Opt-in platform/deploy config validation** against
-  `@extratoast/deploy-config-schema` via a reusable workflow template.
+  `@jorisjonkers-dev/deploy-config-schema` via a reusable workflow template.
   (`templates/platform-config-validation/`)
 - **Design-only Docker pattern skeletons** for JVM, CRaC JVM, OTel entrypoints,
   Vue builds, package-manager builds, and nginx privilege variants.
@@ -42,6 +49,6 @@ scripts/validate-templates.sh
 Repos that carry platform/deploy YAML can opt into schema validation by copying
 `templates/platform-config-validation/platform-config-validate.yml.tmpl` to
 `.github/workflows/platform-config-validate.yml`. The workflow calls
-`ExtraToast/github-workflows/.github/workflows/platform-config-validate.yml@main`
+`JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.6.0`
 with `schema-kind: auto` and defaults to `platform/**/*.yml`,
 `platform/**/*.yaml`, `deploy/**/*.yml`, and `deploy/**/*.yaml`.
