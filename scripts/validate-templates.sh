@@ -32,6 +32,21 @@ json_files=(
 )
 
 workflow_template_files=(templates/workflows/*.yml.tmpl)
+released_workflow_template_files=(
+  templates/workflows/jvm-lib-ci.yml.tmpl
+  templates/workflows/jvm-service-ci.yml.tmpl
+  templates/workflows/gradle-plugin-ci.yml.tmpl
+  templates/workflows/ts-lib-ci.yml.tmpl
+  templates/workflows/vue-app-ci.yml.tmpl
+  templates/workflows/python-ci.yml.tmpl
+  templates/workflows/nix-ci.yml.tmpl
+  templates/workflows/gitops-ci.yml.tmpl
+)
+placeholder_workflow_template_files=(
+  templates/workflows/add-to-project.yml.tmpl
+  templates/workflows/repository-hygiene.yml.tmpl
+  templates/workflows/deploy-bundle.yml.tmpl
+)
 
 log "checking JSON syntax"
 python3 - "$ROOT" "${json_files[@]}" <<'PY'
@@ -119,9 +134,13 @@ grep -R "lint-staged" templates/root-tooling/hooks templates/root-tooling/packag
   || fail "lint-staged preset missing"
 grep -R "prettier --check" templates/root-tooling/package templates/root-tooling/hooks >/dev/null \
   || fail "format check preset missing"
+grep -R '"license": "LicenseRef-JorisJonkers-Proprietary-1.0"' templates/root-tooling/package >/dev/null \
+  || fail "package presets must carry the proprietary LicenseRef"
+grep -F "ignoreStatic: true" templates/root-tooling/stryker.config.mjs.tmpl >/dev/null \
+  || fail "Stryker preset must ignore static mutants by default"
 
 log "checking platform config validation template"
-grep -F "uses: JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.6.0" templates/platform-config-validation/platform-config-validate.yml.tmpl >/dev/null \
+grep -F "uses: JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.7.3" templates/platform-config-validation/platform-config-validate.yml.tmpl >/dev/null \
   || fail "platform config validation template must call the reusable workflow by ref"
 grep -F "schema-kind: auto" templates/platform-config-validation/platform-config-validate.yml.tmpl >/dev/null \
   || fail "platform config validation template must default schema-kind to auto"
@@ -131,22 +150,19 @@ grep -F "deploy/**/*.yaml" templates/platform-config-validation/platform-config-
   || fail "platform config validation template must include deploy YAML globs"
 
 log "checking workflow caller templates"
-for rel in \
-  templates/workflows/jvm-lib-ci.yml.tmpl \
-  templates/workflows/jvm-service-ci.yml.tmpl \
-  templates/workflows/gradle-plugin-ci.yml.tmpl \
-  templates/workflows/ts-lib-ci.yml.tmpl \
-  templates/workflows/vue-app-ci.yml.tmpl \
-  templates/workflows/python-ci.yml.tmpl \
-  templates/workflows/nix-ci.yml.tmpl \
-  templates/workflows/gitops-ci.yml.tmpl; do
+for rel in "${released_workflow_template_files[@]}"; do
   [[ -f "$rel" ]] || fail "missing workflow caller template: $rel"
   grep -F "Pipeline Complete" "$rel" >/dev/null \
     || fail "$rel must include the Pipeline Complete aggregator"
   grep -F "re-actors/alls-green@release/v1" "$rel" >/dev/null \
     || fail "$rel must aggregate reusable workflow jobs"
-  grep -E "JorisJonkers-dev/github-workflows/.github/workflows/.+@v0\\.6\\.0" "$rel" >/dev/null \
-    || fail "$rel must pin reusable workflows to v0.6.0"
+  grep -E "JorisJonkers-dev/github-workflows/.github/workflows/.+@v0\\.7\\.3" "$rel" >/dev/null \
+    || fail "$rel must pin released reusable workflows to v0.7.3"
+done
+for rel in "${placeholder_workflow_template_files[@]}"; do
+  [[ -f "$rel" ]] || fail "missing workflow caller template: $rel"
+  grep -F "@{{github_workflows_ref}}" "$rel" >/dev/null \
+    || fail "$rel must require a rendered published github-workflows ref"
 done
 if rg -n 'JorisJonkers-dev/github-workflows/.github/workflows/.+@(main|master|HEAD)' templates/workflows templates/platform-config-validation; then
   fail "reusable workflow templates must not use moving refs"
@@ -272,7 +288,6 @@ for path in (root / "templates/docker-patterns").glob("**/*.tmpl"):
 
 docs = [
     root / "templates/docker-patterns/README.md",
-    root / "specs/002-round4-docker-pattern-templates/data-model.md",
 ]
 for doc in docs:
     text = doc.read_text(encoding="utf-8")

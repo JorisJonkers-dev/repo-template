@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   verify:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/python-ci.yml@v0.6.0
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/python-ci.yml@v0.7.3
     with:
-      python-version: "3.13"
-      working-directory: "."
+      python-version: '3.13'
+      working-directory: '.'
       install-command: python -m pip install -r requirements-dev.txt
       lint-command: ruff check .
       test-command: python -m unittest discover

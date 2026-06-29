@@ -35,16 +35,21 @@
      when the repo needs Dependabot ecosystems, dependency-review, Scorecard, or
      advanced CodeQL setup.
 10. **Choose root tooling presets** from `templates/root-tooling/` when the repo
-   has frontend linting, local hooks, ADRs, or docs indexes.
+   has frontend linting, local hooks, Stryker mutation testing, ADRs, or docs
+   indexes.
 11. **Opt into platform/deploy config validation** only for repos that carry
     platform config: copy
     `templates/platform-config-validation/platform-config-validate.yml.tmpl` to
     `.github/workflows/platform-config-validate.yml`. It calls
-    `JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.6.0`
+    `JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.7.3`
     with `schema-kind: auto` and platform/deploy YAML globs.
-12. **Review Docker pattern skeletons** in `templates/docker-patterns/` only as
+12. **Opt into Project, hygiene, or deploy bundle callers** by copying the
+    relevant file from `templates/workflows/` after replacing
+    `{{github_workflows_ref}}` with a published `github-workflows` tag. The
+    reusable workflow must exist at that tag.
+13. **Review Docker pattern skeletons** in `templates/docker-patterns/` only as
     design references. They are not production Dockerfiles.
-13. **Validate template assets**:
+14. **Validate template assets**:
     ```bash
     scripts/validate-templates.sh
     ```
@@ -56,17 +61,15 @@
 | `.github/workflows/ci.yml` | One CI pipeline ending in the `Pipeline Complete` gate, including a coverage gate placeholder |
 | `.github/workflows/release.yml` | release-please tag/release + artifact publish |
 | `.github/rulesets/main.json` + `scripts/apply-ruleset.sh` | Org ruleset as code (requires `Pipeline Complete`) |
-| `.github/PULL_REQUEST_TEMPLATE.md` | PR template (tracking + verification + versioning) |
-| `.github/ISSUE_TEMPLATE/*` | Bug / feature / task forms |
 | `.github/CODEOWNERS`, `dependabot.yml`, `renovate.json` | Ownership + dependency automation |
 | `templates/dependency-policy/` | Parameterized Dependabot, Renovate, dependency-review, Scorecard, and CodeQL policy templates |
 | `templates/release-please/` | Release-please config and manifest archetypes |
-| `templates/workflows/` | Reusable workflow caller templates pinned to `JorisJonkers-dev/github-workflows@v0.6.0` |
+| `templates/workflows/` | Reusable workflow caller templates pinned to published `JorisJonkers-dev/github-workflows` tags |
 | `scripts/install-git-hooks.sh`, `templates/push-protection/` | Private-repo pre-push and commit-msg hooks |
-| `templates/root-tooling/` | Root editor, prettier, ESLint, lint-staged, Husky, gitleaks, docs, and ADR presets |
+| `templates/root-tooling/` | Root editor, prettier, ESLint, Stryker, lint-staged, Husky, gitleaks, docs, and ADR presets |
 | `templates/platform-config-validation/` | Opt-in workflow template for `@jorisjonkers-dev/deploy-config-schema` validation |
 | `templates/docker-patterns/` | Design-only Dockerfile and entrypoint skeleton fixtures |
 | `scripts/validate-templates.sh` | Local validation for template syntax, pins, hooks, policy invariants, and source-value leakage |
 | `release-please-config.json`, `.release-please-manifest.json` | Versioning state |
-| `CONTRIBUTING.md`, `VERSIONING.md`, `SECURITY.md` | Conventions |
-| `.editorconfig`, `.gitignore`, `.gitleaks.toml`, `LICENSE` | Baseline hygiene |
+| `CONTRIBUTING.md`, `VERSIONING.md`, `SECURITY.md` | Lean repo-local conventions and security references |
+| `.editorconfig`, `.gitattributes`, `.gitignore`, `.gitleaks.toml`, `LICENSE` | Baseline hygiene |
