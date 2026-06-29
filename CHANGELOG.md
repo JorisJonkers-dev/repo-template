@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.1.0...v1.2.0) (2026-06-29)
+
+
+### Features
+
+* **template:** add JorisJonkers-dev scaffolding and private push hooks ([#3](https://github.com/JorisJonkers-dev/repo-template/issues/3)) ([6df6b56](https://github.com/JorisJonkers-dev/repo-template/commit/6df6b56937e1898dc5a3a10754f0efecae0113f2))
+
 ## [1.1.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.0.0...v1.1.0) (2026-06-10)
 
 
