@@ -9,10 +9,12 @@ Recommended order:
    `gitleaks.toml.tmpl`).
 2. Choose one package preset from `package/`.
 3. Choose one ESLint preset from `eslint/`.
-4. Enable `hooks/husky-pre-commit.tmpl` and `hooks/lintstagedrc.json.tmpl` if
+4. Copy `stryker.config.mjs.tmpl` only when the repository uses mutation
+   testing.
+5. Enable `hooks/husky-pre-commit.tmpl` and `hooks/lintstagedrc.json.tmpl` if
    the repository has Node tooling.
-5. Enable `hooks/strict-pre-commit-check.sh.tmpl` only after the repository has
+6. Enable `hooks/strict-pre-commit-check.sh.tmpl` only after the repository has
    the referenced Gradle and frontend tasks.
-6. Copy the docs/ADR layout that matches the repository shape.
+7. Copy the docs/ADR layout that matches the repository shape.
 
 Detekt defaults align with gradle-conventions: `config/detekt/detekt.yml`.

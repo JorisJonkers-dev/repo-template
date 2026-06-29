@@ -11,9 +11,9 @@ permissions:
 
 jobs:
   verify:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/nix-ci.yml@v0.6.0
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/nix-ci.yml@v0.7.3
     with:
-      flake-path: "."
+      flake-path: '.'
       check-command: nix flake check --print-build-logs
 
   pipeline-complete:

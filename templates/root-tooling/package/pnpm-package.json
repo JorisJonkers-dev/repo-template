@@ -1,6 +1,7 @@
 {
   "name": "{{repo_name}}",
   "private": true,
+  "license": "LicenseRef-JorisJonkers-Proprietary-1.0",
   "type": "module",
   "packageManager": "pnpm@{{pnpm_version}}",
   "scripts": {

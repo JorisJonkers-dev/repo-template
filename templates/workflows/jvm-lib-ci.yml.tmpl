@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   verify:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/jvm-ci.yml@v0.6.0
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/jvm-ci.yml@v0.7.3
     with:
-      java-version: "21"
-      working-directory: "."
+      java-version: '21'
+      working-directory: '.'
       lint-gradle-args: check
       test-gradle-args: build jacocoTestCoverageVerification
     secrets: inherit

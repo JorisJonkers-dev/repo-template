@@ -50,4 +50,4 @@ jobs:
       contents: read
     steps:
       # This repo is consumed by release tag/ref; the GitHub Release is the artifact.
-      - run: echo "Released repo-template at ${{ needs.release-please.outputs.tag_name }}"
+      - run: echo 'Released repo-template at ${{ needs.release-please.outputs.tag_name }}'

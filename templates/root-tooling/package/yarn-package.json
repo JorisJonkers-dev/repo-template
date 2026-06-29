@@ -2,6 +2,7 @@
   "name": "{{package_name}}",
   "version": "{{initial_version}}",
   "private": true,
+  "license": "LicenseRef-JorisJonkers-Proprietary-1.0",
   "type": "module",
   "scripts": {
     "build": "vite build",

@@ -20,7 +20,7 @@ cp templates/platform-config-validation/platform-config-validate.yml.tmpl \
 The default template calls:
 
 ```yaml
-uses: JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.6.0
+uses: JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.7.3
 with:
   config-paths: |
     platform/**/*.yml
@@ -30,7 +30,7 @@ with:
   schema-kind: auto
 ```
 
-Keep the reusable workflow pinned to the `v0.6.0` migration release tag.
+Keep the reusable workflow pinned to a published `github-workflows` release tag.
 
 ## What It Validates
 

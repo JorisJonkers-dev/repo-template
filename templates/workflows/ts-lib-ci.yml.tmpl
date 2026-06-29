@@ -11,11 +11,11 @@ permissions:
 
 jobs:
   verify:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/node-ci.yml@v0.6.0
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/node-ci.yml@v0.7.3
     with:
-      node-version: "24"
+      node-version: '24'
       package-manager: pnpm
-      working-directory: "."
+      working-directory: '.'
       install-command: pnpm install --frozen-lockfile
       lint-command: pnpm lint
       typecheck-command: pnpm typecheck
