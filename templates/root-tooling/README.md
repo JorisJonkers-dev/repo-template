@@ -6,7 +6,9 @@ manager and frontend style.
 Recommended order:
 
 1. Copy shared root hygiene files (`editorconfig.tmpl`, `prettierrc.json.tmpl`,
-   `gitleaks.toml.tmpl`).
+   `prettierignore.tmpl`, `gitleaks.toml.tmpl`). `prettierignore.tmpl` excludes the vendored
+   `.github-workflows/` CI tree, which Prettier would otherwise scan (it does not read
+   `.gitignore`).
 2. Choose one package preset from `package/`.
 3. Choose one ESLint preset from `eslint/`.
 4. Copy `stryker.config.mjs.tmpl` only when the repository uses mutation

@@ -6,6 +6,11 @@ target/
 .gradle/
 node_modules/
 
+# Vendored CI actions tree: the shared reusable workflows check the github-workflows repo out
+# into .github-workflows/ beside the sources. It is CI machinery, not this project's code, so it
+# is never committed and is excluded from linting/formatting (antfu-eslint honours .gitignore).
+.github-workflows/
+
 # Env / secrets (never commit)
 .env
 .env.*
