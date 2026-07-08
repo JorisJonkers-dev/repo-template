@@ -29,6 +29,9 @@ json_files=(
   templates/root-tooling/package/yarn-package.json
   templates/root-tooling/hooks/lintstagedrc.json.tmpl
   templates/root-tooling/prettierrc.json.tmpl
+  templates/platform-deploy/deploy/images.lock.json.tmpl
+  templates/platform-deploy/examples/minimal-service/deploy/images.lock.json
+  templates/platform-deploy/examples/minimal-service/expected-scorecard.json
 )
 
 workflow_template_files=(templates/workflows/*.yml.tmpl)
@@ -68,9 +71,16 @@ yaml_files=(
   templates/dependency-policy/dependabot.yml.tmpl
   templates/dependency-policy/dependency-review.yml.tmpl
   templates/dependency-policy/scorecard.yml.tmpl
-  templates/dependency-policy/codeql.yml.tmpl
+  # codeql.yml.tmpl is intentionally absent: its {{manual_timeout_minutes}}
+  # placeholder renders to a bare integer, so the pre-substitution template is
+  # not parseable YAML (quoting it would change the rendered type).
   templates/dependency-policy/codeql-config.yml.tmpl
   templates/platform-config-validation/platform-config-validate.yml.tmpl
+  templates/platform-deploy/workflows/release.yml.tmpl
+  templates/platform-deploy/workflows/publish.yml.tmpl
+  templates/platform-deploy/workflows/deploy-preview.yml.tmpl
+  templates/platform-deploy/deploy/deployment.yml.tmpl
+  templates/platform-deploy/examples/minimal-service/deploy/deployment.yml
 )
 
 log "checking YAML syntax when a local parser is available"
@@ -164,7 +174,7 @@ for rel in "${placeholder_workflow_template_files[@]}"; do
   grep -F "@{{github_workflows_ref}}" "$rel" >/dev/null \
     || fail "$rel must require a rendered published github-workflows ref"
 done
-if rg -n 'JorisJonkers-dev/github-workflows/.github/workflows/.+@(main|master|HEAD)' templates/workflows templates/platform-config-validation; then
+if rg -n 'JorisJonkers-dev/github-workflows/.github/workflows/.+@(main|master|HEAD)' templates/workflows templates/platform-config-validation templates/platform-deploy; then
   fail "reusable workflow templates must not use moving refs"
 fi
 
@@ -300,6 +310,227 @@ log "checking Docker entrypoint shell syntax"
 for entrypoint_template in templates/docker-patterns/entrypoints/*.tmpl; do
   sh -n "$entrypoint_template"
 done
+
+log "checking platform deploy templates"
+platform_deploy_files=(
+  templates/platform-deploy/README.md
+  templates/platform-deploy/PLATFORM.md.tmpl
+  templates/platform-deploy/workflows/release.yml.tmpl
+  templates/platform-deploy/workflows/publish.yml.tmpl
+  templates/platform-deploy/workflows/deploy-preview.yml.tmpl
+  templates/platform-deploy/deploy/deployment.yml.tmpl
+  templates/platform-deploy/deploy/production.env.tmpl
+  templates/platform-deploy/deploy/images.lock.json.tmpl
+  templates/platform-deploy/deploy/render-local.sh.tmpl
+  templates/platform-deploy/examples/minimal-service/PLATFORM.md
+  templates/platform-deploy/examples/minimal-service/deploy/deployment.yml
+  templates/platform-deploy/examples/minimal-service/deploy/images.lock.json
+  templates/platform-deploy/examples/minimal-service/deploy/render-local.sh
+  templates/platform-deploy/examples/minimal-service/expected-scorecard.json
+)
+for rel in "${platform_deploy_files[@]}"; do
+  [[ -f "$rel" ]] || fail "missing platform deploy file: $rel"
+done
+
+# Released reusable workflows must be pinned to the released tag.
+grep -F "container-publish.yml@v0.11.0" templates/platform-deploy/workflows/publish.yml.tmpl >/dev/null \
+  || fail "publish.yml.tmpl must pin container-publish.yml to v0.11.0"
+grep -F "deploy-artifact.yml@v0.11.0" templates/platform-deploy/workflows/publish.yml.tmpl >/dev/null \
+  || fail "publish.yml.tmpl must pin deploy-artifact.yml to v0.11.0"
+grep -F "deploy-validate.yml@v0.11.0" templates/platform-deploy/workflows/deploy-preview.yml.tmpl >/dev/null \
+  || fail "deploy-preview.yml.tmpl must pin deploy-validate.yml to v0.11.0"
+
+# The App token is mandatory in both token-minting workflows.
+grep -F "E_APP_TOKEN_MISSING" templates/platform-deploy/workflows/release.yml.tmpl >/dev/null \
+  || fail "release.yml.tmpl must assert the App token (E_APP_TOKEN_MISSING)"
+grep -F "E_APP_TOKEN_MISSING" templates/platform-deploy/workflows/publish.yml.tmpl >/dev/null \
+  || fail "publish.yml.tmpl must assert the App token (E_APP_TOKEN_MISSING)"
+
+# R1-2: the image lock crosses the reusable-workflow boundary as an artifact.
+if grep -F "prepare-deploy-inputs" templates/platform-deploy/workflows/publish.yml.tmpl >/dev/null; then
+  fail "publish.yml.tmpl must not have a prepare-deploy-inputs job (the reusable workflow downloads the artifact itself)"
+fi
+grep -F "image-lock-artifact: \${{ needs.resolve-image-lock.outputs.images-lock-artifact }}" \
+  templates/platform-deploy/workflows/publish.yml.tmpl >/dev/null \
+  || fail "publish.yml.tmpl must pass image-lock-artifact from resolve-image-lock outputs"
+if grep -E '^[[:space:]]*image-lock-path:' templates/platform-deploy/workflows/publish.yml.tmpl >/dev/null; then
+  fail "publish.yml.tmpl must not pass image-lock-path (image-lock-artifact is the only lock input)"
+fi
+grep -F "images-lock-\${{ github.run_id }}" templates/platform-deploy/workflows/publish.yml.tmpl >/dev/null \
+  || fail "publish.yml.tmpl image-lock artifact name must include github.run_id"
+
+# First-registration payload must emit the full DeployUnitRegistration spec.
+for marker in '"owner"' '"namespace"' '"layer"' '"sourceRepository"' '"environments"' '"healthClass"' '"prune"' '"allowedClusterScope"' '"contractPath"'; do
+  grep -F "$marker" templates/platform-deploy/workflows/publish.yml.tmpl >/dev/null \
+    || fail "publish.yml.tmpl register-service payload must emit $marker"
+done
+
+python3 - "$ROOT" <<'PY'
+import importlib.util
+import pathlib
+import sys
+
+if importlib.util.find_spec("yaml") is None:
+    print("validate-templates: PyYAML unavailable; skipped platform-deploy workflow structure check")
+    raise SystemExit(0)
+
+import yaml
+
+root = pathlib.Path(sys.argv[1])
+base = root / "templates/platform-deploy/workflows"
+
+release = yaml.safe_load((base / "release.yml.tmpl").read_text(encoding="utf-8"))
+for name, job in release["jobs"].items():
+    needs = job.get("needs") or []
+    if isinstance(needs, str):
+        needs = [needs]
+    if "release-please" in needs:
+        raise SystemExit(f"release.yml.tmpl job {name} must not depend on release-please "
+                         "(tag push triggers publish.yml independently)")
+
+publish = yaml.safe_load((base / "publish.yml.tmpl").read_text(encoding="utf-8"))
+jobs = publish["jobs"]
+for required in ("publish-image", "resolve-image-lock", "publish-deploy-artifact", "register-service"):
+    if required not in jobs:
+        raise SystemExit(f"publish.yml.tmpl missing job {required}")
+for name, job in jobs.items():
+    if "uses" in job and "outputs" in job:
+        raise SystemExit(f"publish.yml.tmpl job {name} calls a reusable workflow and must not "
+                         "redeclare an outputs: block (consume needs.<job>.outputs directly)")
+deploy_with = jobs["publish-deploy-artifact"]["with"]
+if "image-lock-artifact" not in deploy_with:
+    raise SystemExit("publish.yml.tmpl deploy-artifact call must pass image-lock-artifact")
+if "image-lock-path" in deploy_with:
+    raise SystemExit("publish.yml.tmpl deploy-artifact call must not pass image-lock-path")
+PY
+
+log "checking platform deploy placeholder docs"
+python3 - "$ROOT" <<'PY'
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+placeholder_re = re.compile(r"\{\{[a-z0-9_]+\}\}")
+placeholders = set()
+for path in (root / "templates/platform-deploy").glob("**/*.tmpl"):
+    placeholders.update(placeholder_re.findall(path.read_text(encoding="utf-8")))
+
+readme = (root / "templates/platform-deploy/README.md").read_text(encoding="utf-8")
+missing = sorted(ph for ph in placeholders if ph not in readme)
+if missing:
+    raise SystemExit("templates/platform-deploy/README.md missing placeholder docs: "
+                     + ", ".join(missing))
+PY
+
+log "checking render-local template shell syntax"
+bash -n templates/platform-deploy/deploy/render-local.sh.tmpl
+bash -n templates/platform-deploy/examples/minimal-service/deploy/render-local.sh
+if command -v shellcheck >/dev/null 2>&1; then
+  shellcheck templates/platform-deploy/examples/minimal-service/deploy/render-local.sh
+else
+  log "shellcheck unavailable; skipped shellcheck on render-local.sh"
+fi
+
+log "checking minimal-service render-local.sh is the rendered template"
+render_platform_deploy_example() {
+  sed \
+    -e 's/{{service_name}}/minimal-service/g' \
+    -e 's/{{service_namespace}}/minimal-service/g' \
+    -e 's/{{schema_version}}/0.16.0/g' \
+    -e 's|{{context_ref}}|ghcr.io/jorisjonkers-dev/cluster-deploy-context-public@sha256:1111111111111111111111111111111111111111111111111111111111111111|g' \
+    -e 's/{{ghcr_owner}}/jorisjonkers-dev/g' \
+    -e 's/{{image_alias}}/minimal-service/g' \
+    templates/platform-deploy/deploy/render-local.sh.tmpl
+}
+diff <(render_platform_deploy_example) templates/platform-deploy/examples/minimal-service/deploy/render-local.sh \
+  || fail "examples/minimal-service/deploy/render-local.sh drifted from render-local.sh.tmpl; re-render it"
+
+log "checking render-local scorecard behaviour against the minimal-service fixture"
+command -v jq >/dev/null 2>&1 || fail "jq is required for the render-local scorecard checks"
+scorecard_tmp="$(mktemp -d)"
+trap 'rm -rf "$scorecard_tmp"' EXIT
+
+templates/platform-deploy/examples/minimal-service/deploy/render-local.sh --help | grep -F "Usage:" >/dev/null \
+  || fail "render-local.sh --help must print usage"
+
+(cd templates/platform-deploy/examples/minimal-service \
+  && OUT_DIR="$scorecard_tmp/minimal-out" ./deploy/render-local.sh --scorecard-only >/dev/null 2>&1) \
+  || fail "render-local.sh --scorecard-only must pass for the minimal-service fixture"
+diff <(jq -S . "$scorecard_tmp/minimal-out/scorecard.json") \
+  <(jq -S . templates/platform-deploy/examples/minimal-service/expected-scorecard.json) \
+  || fail "minimal-service scorecard does not match expected-scorecard.json"
+
+mkdir -p "$scorecard_tmp/negative/deploy"
+cp templates/platform-deploy/examples/minimal-service/deploy/render-local.sh "$scorecard_tmp/negative/deploy/"
+cp templates/platform-deploy/examples/minimal-service/deploy/images.lock.json "$scorecard_tmp/negative/deploy/"
+cat > "$scorecard_tmp/negative/deploy/deployment.yml" <<'NEGATIVE'
+apiVersion: deployment.jorisjonkers.dev/v2
+metadata:
+  name: negative-service
+spec:
+  schemaVersion: "0.16.0"
+  namespace: negative-service
+  platform:
+    layer: apps-core
+  workloads:
+    - name: negative-service
+      image: minimal-service
+      routes:
+        - host: negative.example.internal
+      stateful: true
+      health:
+        path: /health
+        port: 8080
+        timeoutClass: stateless
+        mandatory: true
+      rollbackTargetRetention:
+        minimumDays: 90
+        acknowledged: true
+NEGATIVE
+if (cd "$scorecard_tmp/negative" && OUT_DIR="$scorecard_tmp/negative/out" ./deploy/render-local.sh --scorecard-only >/dev/null 2>&1); then
+  fail "render-local.sh --scorecard-only must fail when routes lack owner/authMode and stateful lacks migrationPolicy"
+fi
+[[ "$(jq -r '.route_owner_authmode_declared' "$scorecard_tmp/negative/out/scorecard.json")" == "fail" ]] \
+  || fail "routes without owner/authMode must set route_owner_authmode_declared=fail"
+[[ "$(jq -r '.stateful_policy_declared' "$scorecard_tmp/negative/out/scorecard.json")" == "fail" ]] \
+  || fail "stateful workload without migrationPolicy must set stateful_policy_declared=fail"
+[[ "$(jq -r '.raw_manifests_guarded' "$scorecard_tmp/negative/out/scorecard.json")" == "not_applicable" ]] \
+  || fail "no rawManifests block must keep raw_manifests_guarded=not_applicable"
+
+cp templates/platform-deploy/examples/minimal-service/deploy/deployment.yml "$scorecard_tmp/negative/deploy/deployment.yml"
+printf '{\n  "minimal-service": "ghcr.io/jorisjonkers-dev/minimal-service:latest"\n}\n' \
+  > "$scorecard_tmp/negative/deploy/images.lock.json"
+if (cd "$scorecard_tmp/negative" && OUT_DIR="$scorecard_tmp/negative/out-latest" ./deploy/render-local.sh --scorecard-only >/dev/null 2>&1); then
+  fail "render-local.sh --scorecard-only must fail for a :latest image ref"
+fi
+[[ "$(jq -r '.no_latest_images' "$scorecard_tmp/negative/out-latest/scorecard.json")" == "fail" ]] \
+  || fail ":latest image ref must set no_latest_images=fail"
+
+log "checking render-local schema-version resolution and digest guard"
+render_local_example=templates/platform-deploy/examples/minimal-service/deploy/render-local.sh
+SCHEMA_VERSION=0.17.0 bash -c "source $render_local_example; resolve_schema_version" 2>&1 \
+  | grep -F "Using SCHEMA_VERSION from env: 0.17.0" >/dev/null \
+  || fail "SCHEMA_VERSION env must take priority in resolve_schema_version"
+mkdir -p "$scorecard_tmp/version/deploy" "$scorecard_tmp/version/.platform"
+cp "$render_local_example" "$scorecard_tmp/version/deploy/"
+printf '0.16.1\n' > "$scorecard_tmp/version/.platform/deploy-version"
+bash -c "source $scorecard_tmp/version/deploy/render-local.sh; resolve_schema_version" 2>&1 \
+  | grep -F "Using schema version from .platform/deploy-version: 0.16.1" >/dev/null \
+  || fail ".platform/deploy-version must be the second resolution source"
+rm -rf "$scorecard_tmp/version/.platform"
+bash -c "source $scorecard_tmp/version/deploy/render-local.sh; resolve_schema_version" 2>&1 \
+  | grep -F "Using baked-in schema version: 0.16.0" >/dev/null \
+  || fail "baked-in schema version must be the fallback resolution source"
+if bash -c "source $render_local_example; require_digest_ref ghcr.io/example/context:latest" >/dev/null 2>&1; then
+  fail "require_digest_ref must reject non-digest context refs"
+fi
+digest_guard_output="$(bash -c "source $render_local_example; require_digest_ref ghcr.io/example/context:latest" 2>&1 || true)"
+grep -F "E_CONTEXT_REF_NOT_PINNED" <<<"$digest_guard_output" >/dev/null \
+  || fail "non-digest context ref must fail with E_CONTEXT_REF_NOT_PINNED"
+CONTEXT_DIR=/tmp bash -c "source $render_local_example; pull_or_use_local_context" 2>&1 \
+  | grep -F "bypasses OCI digest requirement" >/dev/null \
+  || fail "--context-dir must bypass the digest requirement with a warning"
 
 log "checking for source-specific values in templates"
 forbidden_pattern='esa-blueshell|blueshell|personal-stack|frankfurt-contabo|enschede|167\.86\.79\.203|130\.89\.174\.190|192\.168\.0\.99|auth-system|assistant-system|knowledge-system|media-system|utility-system|data-system|secret/data/platform|secret/platform|secret/agents|auth-api|assistant-api|knowledge-api|uptime-kuma|stalwart|rabbitmq|valkey|postgres'
