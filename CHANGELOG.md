@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.2.0...v1.3.0) (2026-07-08)
+
+
+### Features
+
+* **platform-deploy:** deploy-platform service wiring templates ([#9](https://github.com/JorisJonkers-dev/repo-template/issues/9)) ([cc42a75](https://github.com/JorisJonkers-dev/repo-template/commit/cc42a754fbe2f9589a2a2280254c9c0a0b16e9d0))
+* **templates:** exclude vendored .github-workflows tree by default ([#7](https://github.com/JorisJonkers-dev/repo-template/issues/7)) ([47092c1](https://github.com/JorisJonkers-dev/repo-template/commit/47092c1c448b80be837c594340be6729c1cae32c))
+
 ## [1.2.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.1.0...v1.2.0) (2026-06-29)
 
 
