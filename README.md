@@ -29,6 +29,10 @@ aligned instead of re-inventing CI, rulesets, templates, and release flow.
 - **Opt-in platform/deploy config validation** against
   `@jorisjonkers-dev/deploy-config-schema` via a reusable workflow template.
   (`templates/platform-config-validation/`)
+- **Deploy-platform service wiring** — release/publish/deploy-preview workflow
+  callers, the `deploy/` contract skeleton, a local CI-parity renderer with the
+  SC-11 readiness scorecard, and a worked minimal-service example.
+  (`templates/platform-deploy/`)
 - **Design-only Docker pattern skeletons** for JVM, CRaC JVM, OTel entrypoints,
   Vue builds, package-manager builds, and nginx privilege variants.
   (`templates/docker-patterns/`)
