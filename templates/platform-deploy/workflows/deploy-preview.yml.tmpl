@@ -1,0 +1,28 @@
+# Deploy Preview for deploy-platform service repos.
+#
+# Any PR touching deploy/ gets a full render + validation and a sticky
+# "Deploy Preview" comment with the SC-11 readiness scorecard. The reusable
+# deploy-validate.yml workflow owns the gate-summary emission and the comment.
+name: Deploy Preview
+
+on:
+  pull_request:
+    paths:
+      - 'deploy/**'
+
+permissions: {}
+
+jobs:
+  deploy-preview:
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/deploy-validate.yml@v0.11.0
+    with:
+      deploy-dir: deploy
+      schema-version: '{{schema_version}}'
+      image-lock-path: deploy/images.lock.json
+      context-ref: '{{context_ref}}'
+      environments: production
+      comment: true
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: write
