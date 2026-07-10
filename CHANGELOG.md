@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/JorisJonkers-dev/repo-template/compare/v1.3.1...v1.3.2) (2026-07-10)
+
+
+### Bug Fixes
+
+* **platform-deploy:** add missing kind: Deployment and clarify context-ref sourcing ([#12](https://github.com/JorisJonkers-dev/repo-template/issues/12)) ([64fd7e5](https://github.com/JorisJonkers-dev/repo-template/commit/64fd7e58eee7b8f97f7ea62c6382c690f14a3805))
+
 ## [1.3.1](https://github.com/JorisJonkers-dev/repo-template/compare/v1.3.0...v1.3.1) (2026-07-10)
 
 
