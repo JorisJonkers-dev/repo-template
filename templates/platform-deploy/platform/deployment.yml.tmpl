@@ -3,6 +3,7 @@
 # into the deploy artifact by publish.yml. Run ./platform/render-local.sh for
 # a local CI-parity check.
 apiVersion: deployment.jorisjonkers.dev/v2
+kind: Deployment
 metadata:
   name: '{{service_name}}'
 spec:
