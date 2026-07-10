@@ -5,7 +5,7 @@
 #   validate -> render -> kubeconform -> leak-scan -> scorecard
 #
 # Usage:
-#   ./deploy/render-local.sh [--diff] [--context-dir PATH] [--scorecard-only]
+#   ./platform/render-local.sh [--diff] [--context-dir PATH] [--scorecard-only]
 #
 # Options:
 #   --diff            compare rendered output against committed fixtures; exit 1 on drift

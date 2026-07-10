@@ -1,7 +1,7 @@
 # Platform deploy templates
 
 Wiring for a service repository onto the homelab deploy platform: the three
-workflow callers (release / publish / deploy-preview), the `deploy/` contract
+workflow callers (release / publish / deploy-preview), the `platform/` contract
 skeleton, the local CI-parity renderer, and the `PLATFORM.md` one-pager.
 `examples/minimal-service/` is a complete worked fixture.
 
@@ -13,10 +13,10 @@ skeleton, the local CI-parity renderer, and the `PLATFORM.md` one-pager.
 | `workflows/publish.yml.tmpl` | `.github/workflows/publish.yml` |
 | `workflows/deploy-preview.yml.tmpl` | `.github/workflows/deploy-preview.yml` |
 | `PLATFORM.md.tmpl` | `PLATFORM.md` |
-| `deploy/deployment.yml.tmpl` | `deploy/deployment.yml` |
-| `deploy/production.env.tmpl` | `deploy/production.env` |
-| `deploy/images.lock.json.tmpl` | `deploy/images.lock.json` |
-| `deploy/render-local.sh.tmpl` | `deploy/render-local.sh` (keep executable) |
+| `platform/deployment.yml.tmpl` | `platform/deployment.yml` |
+| `platform/production.env.tmpl` | `platform/production.env` |
+| `platform/images.lock.json.tmpl` | `platform/images.lock.json` |
+| `platform/render-local.sh.tmpl` | `platform/render-local.sh` (keep executable) |
 
 ## Placeholders
 
@@ -27,7 +27,7 @@ skeleton, the local CI-parity renderer, and the `PLATFORM.md` one-pager.
 | `{{schema_version}}` | Exact `@jorisjonkers-dev/deploy-config-schema` npm version | `0.16.0` |
 | `{{context_ref}}` | Digest-pinned OCI ref of the public cluster context | `ghcr.io/…/cluster-deploy-context-public@sha256:…` |
 | `{{ghcr_owner}}` | Lowercase GHCR owner for image refs | `jorisjonkers-dev` |
-| `{{image_alias}}` | Image key in `images.lock.json` referenced by `deployment.yml` | `agents-api` |
+| `{{image_alias}}` | Image key in `platform/images.lock.json` referenced by `platform/deployment.yml` | `agents-api` |
 | `{{release_app_id_var}}` | Actions secret name holding the release App id | `RELEASE_APP_ID` |
 | `{{release_app_key_var}}` | Actions secret name holding the release App private key | `RELEASE_APP_PRIVATE_KEY` |
 
@@ -46,10 +46,10 @@ skeleton, the local CI-parity renderer, and the `PLATFORM.md` one-pager.
 - The first `register-service` registration emits the **full**
   `DeployUnitRegistration` spec (owner, namespace, layer, sourceRepository,
   environments, healthClass, `prune.default: true`, `allowedClusterScope: []`)
-  derived from `deployment.yml`; `spec.platform.layer` is required for it.
+  derived from `platform/deployment.yml`; `spec.platform.layer` is required for it.
   Updates bump only `spec.artifact` and preserve every other field.
 - Reusable workflows are pinned to released
-  `JorisJonkers-dev/github-workflows` tags (currently `v0.11.0`); no moving
+  `JorisJonkers-dev/github-workflows` tags (currently `v0.12.0` pinned by SHA); no moving
   refs.
 - `render-local.sh` mirrors CI (`validate → render → kubeconform → leak-scan →
   scorecard`); its SC-11 scorecard logic is plain bash + jq so it runs — and

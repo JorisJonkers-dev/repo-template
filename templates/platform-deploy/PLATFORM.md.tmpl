@@ -3,30 +3,30 @@
 ## Quick start: local validate
 
 ```bash
-./deploy/render-local.sh
+./platform/render-local.sh
 ```
 
 Review `out/scorecard.md` for any failures before committing.
 
 ## Full deployment flow
 
-1. **Local validate** — `./deploy/render-local.sh`; all scorecard fields must pass (or be `not_applicable`).
+1. **Local validate** — `./platform/render-local.sh`; all scorecard fields must pass (or be `not_applicable`).
 2. **Tag release** — merge to `main`; release-please opens a release PR; merging it pushes a `v*.*.*` tag.
 3. **Automated publish** — `publish.yml` runs on the tag: builds the image → locks the image digest →
    publishes the deploy artifact to GHCR → opens a registry PR in homelab-deploy.
 4. **Renovate pin PR** — Renovate opens a PR in homelab-deploy updating the registry entry digest.
-5. **Deploy preview** — on any PR touching `deploy/`, `deploy-preview.yml` posts a scorecard comment.
+5. **Deploy preview** — on any PR touching `platform/`, `deploy-preview.yml` posts a scorecard comment.
 6. **Merge → gates** — homelab-deploy runs Compose Gate, Leak Scan, Stack Integration Gate, Pipeline Complete.
-7. **Auto-deploy** — on merge to homelab-deploy main, `publish-deploy-branch.yml` pushes to `deploy/production`.
+7. **Auto-deploy** — on merge to homelab-deploy main, `publish-deploy-branch.yml` pushes to `platform/production`.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `deploy/deployment.yml` | Deployment contract (v2): namespace, `platform.layer`, workloads, health, routes, rollback policy |
-| `deploy/images.lock.json` | Digest-pinned image references (object form; no `:latest`) |
-| `deploy/production.env` | Non-secret production environment values |
-| `deploy/render-local.sh` | Local CI-parity render: validate → render → kubeconform → leak-scan → scorecard |
+| `platform/deployment.yml` | Deployment contract (v2): namespace, `platform.layer`, workloads, health, routes, rollback policy |
+| `platform/images.lock.json` | Digest-pinned image references (object form; no `:latest`) |
+| `platform/production.env` | Non-secret production environment values |
+| `platform/render-local.sh` | Local CI-parity render: validate → render → kubeconform → leak-scan → scorecard |
 | `.github/workflows/release.yml` | release-please with mandatory App token (no GITHUB_TOKEN fallback) |
 | `.github/workflows/publish.yml` | Tag-triggered image + deploy-artifact publish and registry PR |
 | `.github/workflows/deploy-preview.yml` | PR validation with sticky scorecard comment |
