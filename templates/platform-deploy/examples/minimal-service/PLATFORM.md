@@ -4,7 +4,7 @@ The smallest service that integrates with the deploy platform: one stateless
 workload, a mandatory health probe, an acknowledged rollback-retention policy,
 and nothing else — no HTTP routes, no stateful storage, no raw manifests.
 
-`deploy/render-local.sh` here is the `render-local.sh.tmpl` template rendered
+`platform/render-local.sh` here is the `render-local.sh.tmpl` template rendered
 with the values below; `scripts/validate-templates.sh` re-renders the template
 and fails on any drift between the two.
 
