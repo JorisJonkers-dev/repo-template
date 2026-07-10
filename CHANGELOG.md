@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/JorisJonkers-dev/repo-template/compare/v1.3.0...v1.3.1) (2026-07-10)
+
+
+### Bug Fixes
+
+* back-port deploy-platform pilot fixes into templates ([771a631](https://github.com/JorisJonkers-dev/repo-template/commit/771a631f356e5d77aa7e32fe99c9fb167e44d00a))
+
 ## [1.3.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.2.0...v1.3.0) (2026-07-08)
 
 
