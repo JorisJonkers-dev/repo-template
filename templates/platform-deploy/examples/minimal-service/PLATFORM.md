@@ -13,7 +13,7 @@ and fails on any drift between the two.
 | `service_name` | `minimal-service` |
 | `service_namespace` | `minimal-service` |
 | `schema_version` | `0.16.0` |
-| `context_ref` | `ghcr.io/jorisjonkers-dev/cluster-deploy-context-public@sha256:1111…` (placeholder digest) |
+| `context_ref` | `ghcr.io/jorisjonkers-dev/cluster-deploy-context-public@sha256:1111…` (placeholder digest — when onboarding a real service, fetch the live pin from `https://raw.githubusercontent.com/JorisJonkers-dev/homelab-deploy/main/.context-pins.yaml`) |
 | `ghcr_owner` | `jorisjonkers-dev` |
 | `image_alias` | `minimal-service` |
 

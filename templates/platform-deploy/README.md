@@ -25,7 +25,7 @@ skeleton, the local CI-parity renderer, and the `PLATFORM.md` one-pager.
 | `{{service_name}}` | Service / artifact name (kebab-case, equals the deploy-artifact name) | `agents-api` |
 | `{{service_namespace}}` | Kubernetes namespace the service deploys into | `agents` |
 | `{{schema_version}}` | Exact `@jorisjonkers-dev/deploy-config-schema` npm version | `0.16.0` |
-| `{{context_ref}}` | Digest-pinned OCI ref of the public cluster context | `ghcr.io/…/cluster-deploy-context-public@sha256:…` |
+| `{{context_ref}}` | Digest-pinned OCI ref of the public cluster context. Always source this from the **live** `homelab-deploy` main branch — never from a local workspace checkout which may be stale. Fetch the current pin with: `curl -sL https://raw.githubusercontent.com/JorisJonkers-dev/homelab-deploy/main/.context-pins.yaml \| yq .publicContext.ref + "@" + .publicContext.digest` or read `.context-pins.yaml` via the GitHub raw URL `https://raw.githubusercontent.com/JorisJonkers-dev/homelab-deploy/main/.context-pins.yaml` | `ghcr.io/jorisjonkers-dev/cluster-deploy-context-public@sha256:…` |
 | `{{ghcr_owner}}` | Lowercase GHCR owner for image refs | `jorisjonkers-dev` |
 | `{{image_alias}}` | Image key in `platform/images.lock.json` referenced by `platform/deployment.yml` | `agents-api` |
 | `{{release_app_id_var}}` | Actions secret name holding the release App id | `RELEASE_APP_ID` |

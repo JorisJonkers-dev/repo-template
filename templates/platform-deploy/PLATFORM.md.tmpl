@@ -2,6 +2,15 @@
 
 ## Quick start: local validate
 
+> **Before running the local render**, set `CONTEXT_REF` to the current pinned digest from `homelab-deploy` main. Always fetch it from the live branch — never copy it from a local workspace checkout, which may be stale or ahead of the published pin:
+>
+> ```bash
+> # Fetch the current public context pin from homelab-deploy main:
+> CONTEXT_REF=$(curl -sL https://raw.githubusercontent.com/JorisJonkers-dev/homelab-deploy/main/.context-pins.yaml \
+>   | python3 -c "import sys,re; d=sys.stdin.read(); ref=re.search(r'ref: (\S+)', d).group(1); dig=re.search(r'digest: (sha256:\S+)', d).group(1); print(ref+'@'+dig)")
+> export CONTEXT_REF
+> ```
+
 ```bash
 ./platform/render-local.sh
 ```
