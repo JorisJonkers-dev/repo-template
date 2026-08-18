@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.3.2...v1.4.0) (2026-08-18)
+
+
+### Features
+
+* add a tofu-ci caller template ([#14](https://github.com/JorisJonkers-dev/repo-template/issues/14)) ([fc22e72](https://github.com/JorisJonkers-dev/repo-template/commit/fc22e72db94fc0d13148b48c759f4922820495ca))
+
 ## [1.3.2](https://github.com/JorisJonkers-dev/repo-template/compare/v1.3.1...v1.3.2) (2026-07-10)
 
 
