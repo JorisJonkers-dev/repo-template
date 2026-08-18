@@ -64,7 +64,7 @@
 | `.github/CODEOWNERS`, `dependabot.yml`, `renovate.json` | Ownership + dependency automation |
 | `templates/dependency-policy/` | Parameterized Dependabot, Renovate, dependency-review, Scorecard, and CodeQL policy templates |
 | `templates/release-please/` | Release-please config and manifest archetypes |
-| `templates/workflows/` | Reusable workflow caller templates pinned to published `JorisJonkers-dev/github-workflows` tags |
+| `templates/workflows/` | Reusable workflow caller templates pinned to published `JorisJonkers-dev/github-workflows` tags, one per stack: jvm, node, python, nix, gitops, docker, tofu |
 | `scripts/install-git-hooks.sh`, `templates/push-protection/` | Private-repo pre-push and commit-msg hooks |
 | `templates/root-tooling/` | Root editor, prettier, ESLint, Stryker, lint-staged, Husky, gitleaks, docs, and ADR presets |
 | `templates/platform-config-validation/` | Opt-in workflow template for `@jorisjonkers-dev/deploy-config-schema` validation |
