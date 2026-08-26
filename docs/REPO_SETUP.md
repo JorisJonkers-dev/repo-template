@@ -28,28 +28,48 @@
    ```
 8. **CODEOWNERS / README**: adjust owners and replace this README's body with
    the repo's purpose.
-9. **Choose dependency policy depth**:
+9. **Set the `workspace-<group>` topic** on the repo. Submodule placement in
+   the [`workspace`](https://github.com/JorisJonkers-dev/workspace) monorepo is
+   derived from this topic, giving `<group>/<repo>`:
+
+   ```sh
+   gh repo edit <owner>/<repo> --add-topic workspace-services
+   ```
+
+   Valid groups are listed in `workspace/.workspace/groups.txt`:
+   `services`, `ui`, `libs`, `platform`, `tooling`, `tests`, `tools`, `data`.
+
+   A repo with no such topic lands in `inbox/` rather than blocking the sync -
+   **so forgetting this fails quietly**. Confirm placement by reading the path
+   in `workspace/.gitmodules` after the next daily sync, not by checking that
+   the topic is set.
+
+10. **Adjust `CLAUDE.md`** for the repo. The template ships a short pointer to
+    the estate-wide agent contract in `workspace/CLAUDE.md`; add anything
+    specific to this repo below it, and leave the pointer in place.
+
+11. **Choose dependency policy depth**:
    - Keep the root `renovate.json` and `.github/dependabot.yml` for the default
      JorisJonkers-dev policy.
    - Copy richer stack-specific variants from `templates/dependency-policy/`
      when the repo needs Dependabot ecosystems, dependency-review, Scorecard, or
      advanced CodeQL setup.
-10. **Choose root tooling presets** from `templates/root-tooling/` when the repo
+12. **Choose root tooling presets** from `templates/root-tooling/` when the repo
    has frontend linting, local hooks, Stryker mutation testing, ADRs, or docs
    indexes.
-11. **Opt into platform/deploy config validation** only for repos that carry
+13. **Opt into platform/deploy config validation** only for repos that carry
     platform config: copy
     `templates/platform-config-validation/platform-config-validate.yml.tmpl` to
     `.github/workflows/platform-config-validate.yml`. It calls
     `JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.7.3`
     with `schema-kind: auto` and platform/deploy YAML globs.
-12. **Opt into Project, hygiene, or deploy bundle callers** by copying the
+14. **Opt into Project, hygiene, or deploy bundle callers** by copying the
     relevant file from `templates/workflows/` after replacing
     `{{github_workflows_ref}}` with a published `github-workflows` tag. The
     reusable workflow must exist at that tag.
-13. **Review Docker pattern skeletons** in `templates/docker-patterns/` only as
+15. **Review Docker pattern skeletons** in `templates/docker-patterns/` only as
     design references. They are not production Dockerfiles.
-14. **Validate template assets**:
+16. **Validate template assets**:
     ```bash
     scripts/validate-templates.sh
     ```
