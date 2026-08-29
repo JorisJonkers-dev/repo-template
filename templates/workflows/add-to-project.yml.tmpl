@@ -1,3 +1,19 @@
+# Event-driven project boarding.
+#
+# DELETE THIS FILE IN A PRIVATE REPO. Boarding costs a full billable minute per
+# issue and pull request opened, for a job that runs in about seven seconds and
+# reads no repository content at all -- and the org-wide sweep in the public
+# .github repo already boards every open item across the organization for free.
+#
+# Keep it in a PUBLIC repo: standard runners are free there, and event-driven
+# boarding is instant instead of waiting for the next sweep.
+#
+# The one private exception in the estate is fleet-infra, which carries enough
+# issue and pull request volume that instant boarding is worth paying for.
+# GitHub throttles scheduled runs hard in this org -- a '*/30' cron delivers
+# only a handful of runs a day -- so the sweep's real latency is hours, not its
+# nominal interval. Weigh that against roughly a minute per event before
+# keeping this in a private repo.
 'name': 'Add to Project'
 
 'on':

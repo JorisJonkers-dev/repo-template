@@ -7,10 +7,20 @@
    ```bash
    scripts/apply-ruleset.sh JorisJonkers-dev/<name>
    ```
-3. **Wire the real CI**: replace the placeholder `lint`/`test`/`coverage`/`build`
-   jobs in `.github/workflows/ci.yml` with this repo's actual jobs, or copy the
-   nearest caller template from `templates/workflows/`. Keep the
-   `pipeline-complete` aggregator and list every gating job in its `needs:`.
+3. **Wire the real CI**: replace the placeholder `Lint`/`Test`/`Coverage`/`Build`
+   **steps** in `.github/workflows/ci.yml` with this repo's real checks, or copy
+   the nearest caller template from `templates/workflows/`.
+
+   Keep them as steps in the one `Pipeline Complete` job. GitHub bills every job
+   rounded up to a full minute, so splitting fast checks across jobs multiplies
+   the bill by the job count while the work stays the same — in this estate that
+   rounding, not compute, was the large majority of private-repo Actions spend.
+
+   Add a second job only when you must: a reusable workflow (`uses:`) cannot be
+   a step. When you do, gate it from the `Pipeline Complete` job with
+   `needs:` plus a final step that fails unless its result is `success` — see
+   the comment at the top of `ci.yml`. Compare against `success` rather than
+   `failure`, so a skipped or cancelled job fails too.
 4. **Wire the coverage gate**: every repo must enforce **>=80% line coverage**.
    - Gradle: apply JaCoCo and run `jacocoTestCoverageVerification` with a line
      coverage minimum of `0.80`.
@@ -78,7 +88,8 @@
 
 | File | Purpose |
 | --- | --- |
-| `.github/workflows/ci.yml` | One CI pipeline ending in the `Pipeline Complete` gate, including a coverage gate placeholder |
+| `.github/workflows/ci.yml` | One CI pipeline, one job, named `Pipeline Complete` — the only required check. Includes a coverage gate placeholder |
+| `.github/workflows/add-to-project.yml` | Event-driven project boarding. **Delete it in a private repo** — the org-wide sweep covers you there and this costs a billable minute per issue and pull request |
 | `.github/workflows/release.yml` | release-please tag/release + artifact publish |
 | `.github/rulesets/main.json` + `scripts/apply-ruleset.sh` | Org ruleset as code (requires `Pipeline Complete`) |
 | `.github/CODEOWNERS`, `dependabot.yml`, `renovate.json` | Ownership + dependency automation |
