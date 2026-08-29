@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.4.0...v1.5.0) (2026-08-29)
+
+
+### Features
+
+* ship a CLAUDE.md pointer and document the workspace-&lt;group&gt; topic ([#16](https://github.com/JorisJonkers-dev/repo-template/issues/16)) ([152373c](https://github.com/JorisJonkers-dev/repo-template/commit/152373c12a80e803218311055b91a0da77ca49db))
+
 ## [1.4.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.3.2...v1.4.0) (2026-08-18)
 
 
