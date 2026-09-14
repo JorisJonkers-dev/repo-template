@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.4.0...v1.5.0) (2026-09-09)
+
+
+### Features
+
+* ship a CLAUDE.md pointer and document the workspace-&lt;group&gt; topic ([#16](https://github.com/JorisJonkers-dev/repo-template/issues/16)) ([152373c](https://github.com/JorisJonkers-dev/repo-template/commit/152373c12a80e803218311055b91a0da77ca49db))
+
+
+### Bug Fixes
+
+* ignore coverage output, drop duplicated worktree block ([#24](https://github.com/JorisJonkers-dev/repo-template/issues/24)) ([a523e62](https://github.com/JorisJonkers-dev/repo-template/commit/a523e62d8c694c976db03d56c2404f0f5837e9cb))
+
 ## [1.4.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.3.2...v1.4.0) (2026-08-18)
 
 
