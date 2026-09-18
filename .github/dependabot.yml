@@ -3,7 +3,8 @@
 # fallback; disable this file if Renovate covers actions in a given repo.
 #
 # Keep the same dependency policy shape as the richer templates under
-# templates/dependency-policy/: 7-day cooldown, grouped minor/patch updates,
+# templates/dependency-policy/: 7-day cooldown for third-party releases (our own
+# org is excluded), grouped minor/patch updates,
 # separate security grouping, and isolated majors.
 version: 2
 updates:
@@ -13,6 +14,10 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+      # Our own releases are already gated by their publishing repo's
+      # pipeline, so a cooldown only delays first-party propagation.
+      exclude:
+        - "JorisJonkers-dev/*"
     open-pull-requests-limit: 5
     groups:
       actions:
