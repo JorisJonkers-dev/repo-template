@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.5.0...v1.6.0) (2026-09-18)
+
+
+### Features
+
+* exclude first-party packages from the Dependabot cooldown ([#25](https://github.com/JorisJonkers-dev/repo-template/issues/25)) ([c7ec3dc](https://github.com/JorisJonkers-dev/repo-template/commit/c7ec3dcaa4e2a4bdfc979903bbfea3364dfec9fd))
+
 ## [1.5.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.4.0...v1.5.0) (2026-09-09)
 
 
