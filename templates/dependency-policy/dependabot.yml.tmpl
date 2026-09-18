@@ -5,7 +5,9 @@
 # - {{default_branch}}: default branch for pull-request-triggered workflows
 #
 # Policy:
-# - 7-day cooldown for newly published versions.
+# - 7-day cooldown for newly published third-party versions.
+# - No cooldown on JorisJonkers-dev packages: our own releases are already
+#   gated by the publishing repository's pipeline.
 # - Minor/patch version updates are grouped.
 # - Security updates are grouped separately.
 # - Major updates are outside version-update groups and open as isolated PRs.
@@ -19,6 +21,11 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+      exclude:
+        - "JorisJonkers-dev/*"
+        - "@jorisjonkers-dev/*"
+        - "dev.jorisjonkers*"
+        - "ghcr.io/jorisjonkers-dev/*"
     open-pull-requests-limit: 5
     groups:
       npm:
@@ -36,6 +43,11 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+      exclude:
+        - "JorisJonkers-dev/*"
+        - "@jorisjonkers-dev/*"
+        - "dev.jorisjonkers*"
+        - "ghcr.io/jorisjonkers-dev/*"
     open-pull-requests-limit: 5
     groups:
       gradle:
@@ -53,6 +65,11 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+      exclude:
+        - "JorisJonkers-dev/*"
+        - "@jorisjonkers-dev/*"
+        - "dev.jorisjonkers*"
+        - "ghcr.io/jorisjonkers-dev/*"
     open-pull-requests-limit: 5
     groups:
       docker:
@@ -69,6 +86,11 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+      exclude:
+        - "JorisJonkers-dev/*"
+        - "@jorisjonkers-dev/*"
+        - "dev.jorisjonkers*"
+        - "ghcr.io/jorisjonkers-dev/*"
     open-pull-requests-limit: 5
     groups:
       actions:
