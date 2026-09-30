@@ -1,0 +1,119 @@
+package main
+
+import (
+	"context"
+	"io"
+	"log/slog"
+	"net"
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
+	"testing"
+	"time"
+)
+
+func TestProbes(t *testing.T) {
+	var ready atomic.Bool
+	h := routes(&ready)
+	cases := []struct {
+		name  string
+		path  string
+		ready bool
+		want  int
+	}{
+		{"liveness ignores readiness", "/healthz", false, http.StatusOK},
+		{"not ready yet", "/readyz", false, http.StatusServiceUnavailable},
+		{"ready", "/readyz", true, http.StatusOK},
+		{"unknown path", "/nope", true, http.StatusNotFound},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ready.Store(tc.ready)
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, tc.path, nil))
+			if rec.Code != tc.want {
+				t.Fatalf("GET %s = %d, want %d", tc.path, rec.Code, tc.want)
+			}
+		})
+	}
+}
+
+func TestServeDrainsOnCancel(t *testing.T) {
+	var lc net.ListenConfig
+	ln, err := lc.Listen(t.Context(), "tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() { done <- serve(ctx, ln, slog.New(slog.DiscardHandler)) }()
+
+	url := "http://" + ln.Addr().String() + "/readyz"
+	waitFor(t, func() bool { return get(t, url) == http.StatusOK })
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("serve returned %v, want nil", err)
+		}
+	case <-time.After(shutdownGrace):
+		t.Fatal("serve did not return after cancel")
+	}
+}
+
+func TestServeReturnsListenerError(t *testing.T) {
+	var lc net.ListenConfig
+	ln, err := lc.Listen(t.Context(), "tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = ln.Close()
+	if err := serve(t.Context(), ln, slog.New(slog.DiscardHandler)); err == nil {
+		t.Fatal("serve on a closed listener returned nil")
+	}
+}
+
+func TestStartExitCodes(t *testing.T) {
+	env := func(addr string) func(string) string {
+		return func(key string) string {
+			if key == "ADDR" {
+				return addr
+			}
+			return ""
+		}
+	}
+	if code := start(t.Context(), env("not-an-address")); code != 1 {
+		t.Fatalf("start with an invalid ADDR = %d, want 1", code)
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 200*time.Millisecond)
+	defer cancel()
+	if code := start(ctx, env("127.0.0.1:0")); code != 0 {
+		t.Fatalf("start after a clean shutdown = %d, want 0", code)
+	}
+}
+
+func get(t *testing.T, url string) int {
+	t.Helper()
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0
+	}
+	defer func() { _ = resp.Body.Close() }()
+	_, _ = io.Copy(io.Discard, resp.Body)
+	return resp.StatusCode
+}
+
+func waitFor(t *testing.T, ok func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for !ok() {
+		if time.Now().After(deadline) {
+			t.Fatal("condition not met within 5s")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}

@@ -33,6 +33,11 @@ aligned instead of re-inventing CI, rulesets, templates, and release flow.
   callers, the `deploy/` contract skeleton, a local CI-parity renderer with the
   SC-11 readiness scorecard, and a worked minimal-service example.
   (`templates/platform-deploy/`)
+- **A minimal Go service archetype** — mise-pinned toolchain, a Taskfile whose
+  `task check` is the whole single-job CI, golangci-lint v2, a multi-arch
+  distroless Dockerfile, and a `cmd/` skeleton with `/healthz`, `/readyz` and
+  graceful shutdown; deploys through the platform-deploy templates.
+  (`templates/go-service/`)
 - **Design-only Docker pattern skeletons** for JVM, CRaC JVM, OTel entrypoints,
   Vue builds, package-manager builds, and nginx privilege variants.
   (`templates/docker-patterns/`)

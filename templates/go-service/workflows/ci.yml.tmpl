@@ -1,0 +1,62 @@
+# One pipeline ending in "Pipeline Complete", the only required check (estate convention).
+# ONE job: GitHub bills each job rounded up to a full minute, so checks are steps, not jobs.
+# Steps run `task` targets so CI and `task check` cannot drift, and carry
+# `if: ${{ !cancelled() }}` so one failure still surfaces the rest.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline-complete:
+    name: Pipeline Complete
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v5
+        with:
+          cache: true
+
+      - name: Format
+        if: ${{ !cancelled() }}
+        run: task fmt
+
+      - name: Lint Go
+        if: ${{ !cancelled() }}
+        run: task lint:go
+
+      - name: Lint migrations
+        if: ${{ !cancelled() }}
+        run: task lint:sql
+
+      - name: Lint workflows
+        if: ${{ !cancelled() }}
+        run: task lint:actions
+
+      - name: Vet
+        if: ${{ !cancelled() }}
+        run: task vet
+
+      - name: Test (race) and coverage
+        if: ${{ !cancelled() }}
+        run: task test
+
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: task build
+
+      - name: Container image builds
+        if: ${{ !cancelled() }}
+        run: docker build --build-arg VERSION=ci -t {{service_name}}:ci .

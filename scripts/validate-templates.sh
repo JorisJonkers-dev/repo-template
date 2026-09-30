@@ -81,6 +81,9 @@ yaml_files=(
   templates/platform-deploy/workflows/deploy-preview.yml.tmpl
   templates/platform-deploy/platform/deployment.yml.tmpl
   templates/platform-deploy/examples/minimal-service/platform/deployment.yml
+  templates/go-service/Taskfile.yml.tmpl
+  templates/go-service/golangci.yml.tmpl
+  templates/go-service/workflows/ci.yml.tmpl
 )
 
 log "checking YAML syntax when a local parser is available"
@@ -533,6 +536,117 @@ grep -F "E_CONTEXT_REF_NOT_PINNED" <<<"$digest_guard_output" >/dev/null \
 CONTEXT_DIR=/tmp bash -c "source $render_local_example; pull_or_use_local_context" 2>&1 \
   | grep -F "bypasses OCI digest requirement" >/dev/null \
   || fail "--context-dir must bypass the digest requirement with a warning"
+
+log "checking go-service archetype"
+go_service_files=(
+  templates/go-service/README.md
+  templates/go-service/mise.toml.tmpl
+  templates/go-service/Taskfile.yml.tmpl
+  templates/go-service/golangci.yml.tmpl
+  templates/go-service/Dockerfile.tmpl
+  templates/go-service/dockerignore.tmpl
+  templates/go-service/go.mod.tmpl
+  templates/go-service/workflows/ci.yml.tmpl
+  templates/go-service/cmd/app/main.go.tmpl
+  templates/go-service/cmd/app/main_test.go.tmpl
+)
+for rel in "${go_service_files[@]}"; do
+  [[ -f "$rel" ]] || fail "missing go-service file: $rel"
+done
+for marker in 'CGO_ENABLED=0' 'GOOS=$TARGETOS GOARCH=$TARGETARCH' 'FROM --platform=$BUILDPLATFORM' 'distroless/static' 'USER nonroot:nonroot'; do
+  grep -F "$marker" templates/go-service/Dockerfile.tmpl >/dev/null \
+    || fail "go-service Dockerfile.tmpl must contain: $marker"
+done
+for tool in go task golangci-lint sqlc '"github:sbdchd/squawk"'; do
+  grep -E "^${tool} = \"[0-9]" templates/go-service/mise.toml.tmpl >/dev/null \
+    || fail "go-service mise.toml.tmpl must pin $tool to an exact version"
+done
+
+python3 - "$ROOT" <<'PY'
+import importlib.util
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+base = root / "templates/go-service"
+
+placeholder_re = re.compile(r"\{\{[a-z0-9_]+\}\}")
+placeholders = set()
+for path in base.glob("**/*.tmpl"):
+    placeholders.update(placeholder_re.findall(path.read_text(encoding="utf-8")))
+readme = (base / "README.md").read_text(encoding="utf-8")
+missing = sorted(ph for ph in placeholders if ph not in readme)
+if missing:
+    raise SystemExit("templates/go-service/README.md missing placeholder docs: " + ", ".join(missing))
+
+if importlib.util.find_spec("yaml") is None:
+    print("validate-templates: PyYAML unavailable; skipped go-service structure check")
+    raise SystemExit(0)
+
+import yaml
+
+tasks = yaml.safe_load((base / "Taskfile.yml.tmpl").read_text(encoding="utf-8"))["tasks"]
+check = [c["task"] for c in tasks["check"]["cmds"]]
+if check != ["fmt", "lint", "vet", "test", "build"]:
+    raise SystemExit(f"go-service task check must run fmt, lint, vet, test, build in order (got {check})")
+if not any("-race" in c for c in tasks["test"]["cmds"] if isinstance(c, str)):
+    raise SystemExit("go-service task test must run with -race")
+
+ci = yaml.safe_load((base / "workflows/ci.yml.tmpl").read_text(encoding="utf-8"))
+jobs = ci["jobs"]
+if len(jobs) != 1:
+    raise SystemExit("go-service ci.yml.tmpl must be a single job (jobs bill per rounded-up minute)")
+job = next(iter(jobs.values()))
+if job.get("name") != "Pipeline Complete":
+    raise SystemExit("go-service ci.yml.tmpl job must be named Pipeline Complete")
+steps = job["steps"]
+if not any(str(s.get("uses", "")).startswith("jdx/mise-action@") for s in steps):
+    raise SystemExit("go-service ci.yml.tmpl must install the toolchain with jdx/mise-action")
+for step in steps:
+    if "run" in step and step.get("if") != "${{ !cancelled() }}":
+        raise SystemExit(f"go-service ci.yml.tmpl step {step.get('name')!r} must carry if: ${{{{ !cancelled() }}}}")
+PY
+
+render_go_service() {
+  local out="$1" pair src dst
+  mkdir -p "$out/cmd/example-service" "$out/.github/workflows"
+  for pair in \
+    mise.toml.tmpl:mise.toml Taskfile.yml.tmpl:Taskfile.yml golangci.yml.tmpl:.golangci.yml \
+    Dockerfile.tmpl:Dockerfile dockerignore.tmpl:.dockerignore go.mod.tmpl:go.mod \
+    workflows/ci.yml.tmpl:.github/workflows/ci.yml \
+    cmd/app/main.go.tmpl:cmd/example-service/main.go \
+    cmd/app/main_test.go.tmpl:cmd/example-service/main_test.go; do
+    src="${pair%%:*}"
+    dst="${pair#*:}"
+    sed -e 's/{{service_name}}/example-service/g' \
+        -e 's|{{go_module}}|github.com/JorisJonkers-dev/example-service|g' \
+        "templates/go-service/$src" > "$out/$dst"
+  done
+}
+
+# The Go build check needs a local toolchain at least as new as go.mod asks for;
+# GOTOOLCHAIN=local keeps it offline instead of downloading a newer one.
+go_required="$(awk '/^go / { print $2 }' templates/go-service/go.mod.tmpl)"
+if ! command -v go >/dev/null 2>&1; then
+  log "go unavailable; skipped go-service build check"
+else
+  go_local="$(go env GOVERSION | sed 's/^go//')"
+  if [[ "$(printf '%s\n%s\n' "$go_required" "$go_local" | sort -V | head -n1)" != "$go_required" ]]; then
+    log "go $go_local older than $go_required; skipped go-service build check"
+  else
+    go_service_tmp="$(mktemp -d)"
+    render_go_service "$go_service_tmp"
+    if grep -rnE '\{\{[a-z0-9_]+\}\}' "$go_service_tmp"; then
+      rm -rf "$go_service_tmp"
+      fail "rendered go-service still contains placeholders"
+    fi
+    (cd "$go_service_tmp" && GOTOOLCHAIN=local go vet ./... && GOTOOLCHAIN=local go test -count=1 ./... >/dev/null) \
+      || { rm -rf "$go_service_tmp"; fail "rendered go-service does not vet/test cleanly"; }
+    [[ -z "$(gofmt -l "$go_service_tmp")" ]] || { rm -rf "$go_service_tmp"; fail "rendered go-service is not gofmt-clean"; }
+    rm -rf "$go_service_tmp"
+  fi
+fi
 
 log "checking for source-specific values in templates"
 forbidden_pattern='esa-blueshell|blueshell|personal-stack|frankfurt-contabo|enschede|167\.86\.79\.203|130\.89\.174\.190|192\.168\.0\.99|assistant-system|knowledge-system|media-system|utility-system|data-system|secret/data/platform|secret/platform|secret/agents|auth-api|assistant-api|knowledge-api|uptime-kuma|stalwart|rabbitmq|valkey|postgres'
