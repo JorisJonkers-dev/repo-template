@@ -14,6 +14,10 @@ things that most often go wrong, including:
   passing `--label`.
 - **Verify the value, not the command.** An exit code, a `Ready` condition or
   an accepted object is not evidence that a consumer sees what you intended.
+- **Tests.** Each test checks one behaviour and is named as that behaviour; tests run with
+  no retries, and a flaky test is fixed or quarantined with an issue for at most 14 days.
+  The standard is
+  [docs/testing-standards.md](https://github.com/JorisJonkers-dev/workspace/blob/main/docs/testing-standards.md).
 - Traps around workflow runs, `zsh` word-splitting, and detached submodule
   HEADs.
 

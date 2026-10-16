@@ -47,8 +47,15 @@ permissions:
   contents: read
 
 jobs:
+  # A skipped test whose quarantine ran out, names no issue, or lasts over 14 days fails the build
+  # (workspace docs/testing-standards.md, section 7). A reusable workflow, so its own job.
+  quarantine:
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/quarantine-check.yml@v0.27.1
+
   pipeline-complete:
     name: Pipeline Complete
+    needs: [quarantine]
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -84,3 +91,7 @@ jobs:
         shell: bash
         run: |
           "${{ steps.actionlint.outputs.executable }}" -color .github/workflows/*.yml
+
+      - name: Quarantine check passed
+        if: ${{ !cancelled() }}
+        run: test "${{ needs.quarantine.result }}" = success
