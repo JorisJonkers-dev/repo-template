@@ -152,6 +152,16 @@ grep -R '"license": "LicenseRef-JorisJonkers-Proprietary-1.0"' templates/root-to
 grep -F "ignoreStatic: true" templates/root-tooling/stryker.config.mjs.tmpl >/dev/null \
   || fail "Stryker preset must ignore static mutants by default"
 
+log "checking the testing standard"
+grep -F '"test:e2e": "playwright test --retries=0"' templates/root-tooling/package/yarn-package.json >/dev/null \
+  || fail "the e2e script must run with retries off; a flaky test is fixed or quarantined"
+grep -F "uses: JorisJonkers-dev/github-workflows/.github/workflows/quarantine-check.yml@" .github/workflows/ci.yml >/dev/null \
+  || fail "CI must run the quarantine expiry check"
+grep -F "needs.quarantine.result" .github/workflows/ci.yml >/dev/null \
+  || fail "Pipeline Complete must fail when the quarantine check does not succeed"
+grep -F "docs/testing-standards.md" CLAUDE.md >/dev/null \
+  || fail "CLAUDE.md must name the testing standard"
+
 log "checking platform config validation template"
 grep -F "uses: JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.7.3" templates/platform-config-validation/platform-config-validate.yml.tmpl >/dev/null \
   || fail "platform config validation template must call the reusable workflow by ref"

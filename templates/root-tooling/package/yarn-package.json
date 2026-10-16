@@ -10,7 +10,7 @@
     "dev": "vite --host",
     "test:unit": "vitest run --coverage",
     "test:unit:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --retries=0",
     "test:e2e:headed": "playwright test --headed",
     "test": "yarn test:unit && yarn test:e2e",
     "lint": "eslint --fix --max-warnings 0 {{lint_paths}}",
