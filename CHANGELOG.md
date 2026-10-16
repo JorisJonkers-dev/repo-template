@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.5.0...v1.6.0) (2026-10-16)
+
+
+### Features
+
+* add a minimal Go service archetype ([#27](https://github.com/JorisJonkers-dev/repo-template/issues/27)) ([3ce1c3d](https://github.com/JorisJonkers-dev/repo-template/commit/3ce1c3dae9de787ddf6f218a1e9fbd76c5107483))
+* exclude first-party packages from the Dependabot cooldown ([#25](https://github.com/JorisJonkers-dev/repo-template/issues/25)) ([c7ec3dc](https://github.com/JorisJonkers-dev/repo-template/commit/c7ec3dcaa4e2a4bdfc979903bbfea3364dfec9fd))
+* new repos run tests without retries and check quarantines ([#29](https://github.com/JorisJonkers-dev/repo-template/issues/29)) ([87d4b43](https://github.com/JorisJonkers-dev/repo-template/commit/87d4b43d1f2c2547ae7d286c6b89e2b52f67b0f1))
+
 ## [1.5.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.4.0...v1.5.0) (2026-09-09)
 
 
