@@ -65,7 +65,6 @@ for rel in sys.argv[2:]:
 PY
 
 yaml_files=(
-  .github/dependabot.yml
   .github/workflows/ci.yml
   .github/workflows/release.yml
   templates/dependency-policy/dependabot.yml.tmpl
@@ -106,12 +105,12 @@ for rel in sys.argv[2:]:
 PY
 
 log "checking dependency policy invariants"
-grep -R "default-days: 7" .github/dependabot.yml templates/dependency-policy/dependabot.yml.tmpl >/dev/null \
-  || fail "Dependabot policy must include 7-day cooldown"
+grep -R "default-days: 7" templates/dependency-policy/dependabot.yml.tmpl >/dev/null \
+  || fail "Dependabot template must include 7-day cooldown"
 grep -R "update-types: \\[minor, patch\\]" templates/dependency-policy/dependabot.yml.tmpl >/dev/null \
   || fail "Dependabot template must group minor and patch updates"
-grep -R "security-updates" templates/dependency-policy/dependabot.yml.tmpl .github/dependabot.yml >/dev/null \
-  || fail "Dependabot policy must group security updates"
+grep -R "security-updates" templates/dependency-policy/dependabot.yml.tmpl >/dev/null \
+  || fail "Dependabot template must group security updates"
 
 log "checking Renovate shared preset"
 python3 - "$ROOT" <<'PY'

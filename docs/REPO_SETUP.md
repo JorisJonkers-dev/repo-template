@@ -59,8 +59,8 @@
     specific to this repo below it, and leave the pointer in place.
 
 11. **Choose dependency policy depth**:
-   - Keep the root `renovate.json` and `.github/dependabot.yml` for the default
-     JorisJonkers-dev policy.
+   - Keep the root `renovate.json` for the default JorisJonkers-dev policy;
+     Renovate alone updates dependencies, so the repo ships no Dependabot file.
    - Copy richer stack-specific variants from `templates/dependency-policy/`
      when the repo needs Dependabot ecosystems, dependency-review, Scorecard, or
      advanced CodeQL setup.
@@ -92,7 +92,7 @@
 | `.github/workflows/add-to-project.yml` | Event-driven project boarding. **Delete it in a private repo** — the org-wide sweep covers you there and this costs a billable minute per issue and pull request |
 | `.github/workflows/release.yml` | release-please tag/release + artifact publish |
 | `.github/rulesets/main.json` + `scripts/apply-ruleset.sh` | Org ruleset as code (requires `Pipeline Complete`) |
-| `.github/CODEOWNERS`, `dependabot.yml`, `renovate.json` | Ownership + dependency automation |
+| `.github/CODEOWNERS`, `renovate.json` | Ownership + dependency automation |
 | `templates/dependency-policy/` | Parameterized Dependabot, Renovate, dependency-review, Scorecard, and CodeQL policy templates |
 | `templates/release-please/` | Release-please config and manifest archetypes |
 | `templates/workflows/` | Reusable workflow caller templates pinned to published `JorisJonkers-dev/github-workflows` tags, one per stack: jvm, node, python, nix, gitops, docker, tofu |
