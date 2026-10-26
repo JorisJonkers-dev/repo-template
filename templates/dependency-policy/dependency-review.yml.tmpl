@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: ["{{default_branch}}"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 permissions:
   contents: read
 
