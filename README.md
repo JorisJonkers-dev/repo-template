@@ -16,8 +16,8 @@ aligned instead of re-inventing CI, rulesets, templates, and release flow.
 - **Release-please archetype templates** for simple, Node, and Gradle repos.
   (`templates/release-please/`)
 - **Reusable workflow caller templates** for JVM, Node, Python, Nix, Dockerized
-  services, GitOps repos, project onboarding, repository hygiene, and deploy
-  bundles. (`templates/workflows/`)
+  services, GitOps repos, project onboarding, and repository hygiene.
+  (`templates/workflows/`)
 - **Private-repo push-protection hooks** for direct-main-push blocking and
   Conventional Commit enforcement. (`scripts/install-git-hooks.sh`,
   `templates/push-protection/`)
@@ -26,17 +26,10 @@ aligned instead of re-inventing CI, rulesets, templates, and release flow.
   Scorecard, and CodeQL. (`templates/dependency-policy/`)
 - **Root tooling and docs presets** for frontend lint/format hooks, Stryker,
   gitleaks, ADR layout, and docs indexes. (`templates/root-tooling/`)
-- **Opt-in platform/deploy config validation** against
-  `@jorisjonkers-dev/deploy-config-schema` via a reusable workflow template.
-  (`templates/platform-config-validation/`)
-- **Deploy-platform service wiring** — release/publish/deploy-preview workflow
-  callers, the `deploy/` contract skeleton, a local CI-parity renderer with the
-  SC-11 readiness scorecard, and a worked minimal-service example.
-  (`templates/platform-deploy/`)
 - **A minimal Go service archetype** — mise-pinned toolchain, a Taskfile whose
   `task check` is the whole single-job CI, golangci-lint v2, a multi-arch
   distroless Dockerfile, and a `cmd/` skeleton with `/healthz`, `/readyz` and
-  graceful shutdown; deploys through the platform-deploy templates.
+  graceful shutdown.
   (`templates/go-service/`)
 - **Design-only Docker pattern skeletons** for JVM, CRaC JVM, OTel entrypoints,
   Vue builds, package-manager builds, and nginx privilege variants.
@@ -57,14 +50,7 @@ Validate template assets locally with:
 scripts/validate-templates.sh
 ```
 
-Repos that carry platform/deploy YAML can opt into schema validation by copying
-`templates/platform-config-validation/platform-config-validate.yml.tmpl` to
-`.github/workflows/platform-config-validate.yml`. The workflow calls
-`JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.7.3`
-with `schema-kind: auto` and defaults to `platform/**/*.yml`,
-`platform/**/*.yaml`, `deploy/**/*.yml`, and `deploy/**/*.yaml`.
-
-Project, repository-hygiene, and deploy-bundle caller templates require the
+Project and repository-hygiene caller templates require the
 matching reusable workflows to exist in `github-workflows`; render
 `{{github_workflows_ref}}` to a published tag before copying them into a repo.
 

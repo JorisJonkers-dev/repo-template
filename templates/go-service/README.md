@@ -5,10 +5,9 @@ A minimal Go HTTP service: stdlib `net/http`, `slog` JSON logs, `/healthz` and
 in `mise.toml` and every check is a `task` target, so `task check` locally and
 the one CI job run the same commands.
 
-It covers the build-and-check half of a service repo only. Deploy wiring comes
-from [`../platform-deploy/`](../platform-deploy/README.md) and release
-versioning from [`../release-please/`](../release-please/); neither is copied
-here.
+It covers the build-and-check half of a service repo only. Delivery goes
+through the estate (see [Deploying it](#deploying-it)) and release versioning
+comes from [`../release-please/`](../release-please/); neither is copied here.
 
 ## Files
 
@@ -30,7 +29,7 @@ Add `bin/` and `coverage.out` to the repo's `.gitignore`.
 
 | Placeholder | Meaning | Example |
 |-------------|---------|---------|
-| `{{service_name}}` | Binary, `cmd/` directory and image name (kebab-case). Use the same value as `{{service_name}}` in `platform-deploy`. | `example-service` |
+| `{{service_name}}` | Binary, `cmd/` directory and image name (kebab-case). | `example-service` |
 | `{{go_module}}` | Go module path; also the goimports local prefix | `github.com/JorisJonkers-dev/example-service` |
 
 Render with plain substitution, for example:
@@ -76,10 +75,11 @@ with no shell, so health is checked by Kubernetes probes, not a `HEALTHCHECK`.
 
 ## Deploying it
 
-Copy the `platform-deploy` templates as that README describes, then:
+Deliver it through the estate with a deploy-kit Project Intent and a tag
+publish that calls `publish-fragment.yml`, then:
 
-- In `platform/deployment.yml`, set the workload's `health.path` to `/readyz`
-  (port `8080` already matches).
+- In the project file, point the Process's `probes.readiness` at `/readyz` and
+  `probes.liveness` at `/healthz` (port `8080` already matches).
 - In `.github/workflows/publish.yml`, add
   `platforms: linux/amd64,linux/arm64` to the `publish-image` job's `with:`.
   `container-publish.yml` defaults to `linux/amd64` only.

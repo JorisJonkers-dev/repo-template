@@ -67,19 +67,13 @@
 12. **Choose root tooling presets** from `templates/root-tooling/` when the repo
    has frontend linting, local hooks, Stryker mutation testing, ADRs, or docs
    indexes.
-13. **Opt into platform/deploy config validation** only for repos that carry
-    platform config: copy
-    `templates/platform-config-validation/platform-config-validate.yml.tmpl` to
-    `.github/workflows/platform-config-validate.yml`. It calls
-    `JorisJonkers-dev/github-workflows/.github/workflows/platform-config-validate.yml@v0.7.3`
-    with `schema-kind: auto` and platform/deploy YAML globs.
-14. **Opt into Project, hygiene, or deploy bundle callers** by copying the
+13. **Opt into Project or hygiene callers** by copying the
     relevant file from `templates/workflows/` after replacing
     `{{github_workflows_ref}}` with a published `github-workflows` tag. The
     reusable workflow must exist at that tag.
-15. **Review Docker pattern skeletons** in `templates/docker-patterns/` only as
+14. **Review Docker pattern skeletons** in `templates/docker-patterns/` only as
     design references. They are not production Dockerfiles.
-16. **Validate template assets**:
+15. **Validate template assets**:
     ```bash
     scripts/validate-templates.sh
     ```
@@ -98,7 +92,6 @@
 | `templates/workflows/` | Reusable workflow caller templates pinned to published `JorisJonkers-dev/github-workflows` tags, one per stack: jvm, node, python, nix, gitops, docker, tofu |
 | `scripts/install-git-hooks.sh`, `templates/push-protection/` | Private-repo pre-push and commit-msg hooks |
 | `templates/root-tooling/` | Root editor, prettier, ESLint, Stryker, lint-staged, Husky, gitleaks, docs, and ADR presets |
-| `templates/platform-config-validation/` | Opt-in workflow template for `@jorisjonkers-dev/deploy-config-schema` validation |
 | `templates/docker-patterns/` | Design-only Dockerfile and entrypoint skeleton fixtures |
 | `scripts/validate-templates.sh` | Local validation for template syntax, pins, hooks, policy invariants, and source-value leakage |
 | `release-please-config.json`, `.release-please-manifest.json` | Versioning state |
