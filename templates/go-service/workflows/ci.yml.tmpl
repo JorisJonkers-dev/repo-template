@@ -59,4 +59,21 @@ jobs:
 
       - name: Container image builds
         if: ${{ !cancelled() }}
-        run: docker build --build-arg VERSION=ci -t {{service_name}}:ci .
+        env:
+          PACKAGES_PROXY_TOKEN: ${{ secrets.PACKAGES_PROXY_TOKEN }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ -n "$PACKAGES_PROXY_TOKEN" ]; then
+            printf '::add-mask::%s\n' "$PACKAGES_PROXY_TOKEN"
+            umask 077
+            netrc="$RUNNER_TEMP/packages-netrc"
+            {
+              printf 'machine packages.jorisjonkers.dev\n'
+              printf 'login packages\n'
+              printf 'password %s\n' "$PACKAGES_PROXY_TOKEN"
+            } > "$netrc"
+            args+=(--secret "id=packages-netrc,src=$netrc"
+              --build-arg GOPROXY=https://packages.jorisjonkers.dev/go)
+          fi
+          docker build --build-arg VERSION=ci "${args[@]}" -t {{service_name}}:ci .

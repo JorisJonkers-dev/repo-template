@@ -6,12 +6,19 @@ ARG CRAC_RUNTIME_IMAGE="{{crac_runtime_image}}"
 FROM ${JVM_BUILD_IMAGE} AS build
 WORKDIR /workspace
 
+# Gradle reads the package proxy token from the BuildKit secret `packages-netrc`
+# through this init script (a no-op without the secret). Pass `-I` in the
+# commands below: -I /opt/packages-proxy.init.gradle.kts
+COPY packages-proxy.init.gradle.kts /opt/packages-proxy.init.gradle.kts
+
 COPY {{jvm_dependency_manifest_paths}} ./
 RUN --mount=type=cache,target={{jvm_build_cache_target}} \
+    --mount=type=secret,id=packages-netrc,target=/run/secrets/packages-netrc,required=false \
     {{jvm_dependency_resolution_command}}
 
 COPY {{jvm_source_paths}} ./
 RUN --mount=type=cache,target={{jvm_build_cache_target}} \
+    --mount=type=secret,id=packages-netrc,target=/run/secrets/packages-netrc,required=false \
     {{jvm_build_command}}
 
 FROM ${CRAC_RUNTIME_IMAGE} AS crac-base
