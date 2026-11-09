@@ -10,6 +10,7 @@ hostnames, queues, IP addresses, or image prefixes.
 ## Templates
 
 - `jvm/Dockerfile.jvm.tmpl`: multi-stage JVM application build and runtime.
+- `jvm/packages-proxy.init.gradle.kts`: Gradle init script the JVM templates COPY; copy it next to the rendered Dockerfile's context root. It routes Gradle through the package proxy when the `packages-netrc` BuildKit secret is present, and does nothing otherwise.
 - `jvm/Dockerfile.crac-jvm.tmpl`: multi-stage CRaC JVM build with `train` and
   `runtime` targets.
 - `entrypoints/otel-entrypoint.sh.tmpl`: OTel-aware Java entrypoint that
