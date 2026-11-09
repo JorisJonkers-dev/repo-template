@@ -14,7 +14,8 @@ RUN {{pnpm_bootstrap_command}}
 COPY {{pnpm_workspace_files}} ./
 COPY {{pnpm_package_manifest_paths}} ./
 RUN --mount=type=cache,target={{pnpm_store_path}} \
-    pnpm install --frozen-lockfile
+    --mount=type=secret,id=packages-npmrc,target=/run/secrets/packages-npmrc,required=false \
+    NPM_CONFIG_USERCONFIG=/run/secrets/packages-npmrc pnpm install --frozen-lockfile
 
 FROM deps AS build
 ARG VITE_PUBLIC_BASE_URL="{{vite_public_base_url}}"

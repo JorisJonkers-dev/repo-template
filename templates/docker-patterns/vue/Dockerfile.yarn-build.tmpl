@@ -12,7 +12,8 @@ RUN corepack enable
 COPY {{yarn_workspace_files}} ./
 COPY {{yarn_package_manifest_paths}} ./
 RUN --mount=type=cache,target={{yarn_cache_folder}} \
-    YARN_CACHE_FOLDER={{yarn_cache_folder}} yarn install --immutable
+    --mount=type=secret,id=packages-npmrc,target=/run/secrets/packages-npmrc,required=false \
+    NPM_CONFIG_USERCONFIG=/run/secrets/packages-npmrc YARN_CACHE_FOLDER={{yarn_cache_folder}} yarn install --immutable
 
 FROM deps AS build
 ARG VITE_PUBLIC_BASE_URL="{{vite_public_base_url}}"
