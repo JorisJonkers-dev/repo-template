@@ -15,8 +15,9 @@ permissions:
 
 jobs:
   jvm:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/jvm-ci.yml@v0.7.3
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/jvm-ci.yml@8b5462a796f022647dfc44123ddb3655cc3c2f28 # v0.45.3
     with:
+      require-package-proxy: true
       java-version: '21'
       working-directory: '.'
       lint-gradle-args: check
@@ -24,15 +25,16 @@ jobs:
     secrets: inherit
 
   docker-image:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/docker-image-ci.yml@v0.7.3
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/docker-image-ci.yml@8b5462a796f022647dfc44123ddb3655cc3c2f28 # v0.45.3
     with:
+      require-package-proxy: true
       image-name: '{{image_name}}'
       context: '.'
       dockerfile: 'Dockerfile'
     secrets: inherit
 
   migration-guard:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/migration-guard.yml@v0.7.3
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/migration-guard.yml@8b5462a796f022647dfc44123ddb3655cc3c2f28 # v0.45.3
 
   pipeline-complete:
     name: Pipeline Complete

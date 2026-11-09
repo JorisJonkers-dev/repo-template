@@ -25,6 +25,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Go modules come through the estate's package proxy (JorisJonkers-dev/workspace#167).
+      - uses: JorisJonkers-dev/github-workflows/actions/setup-package-proxy@8b5462a796f022647dfc44123ddb3655cc3c2f28 # v0.45.3
+        with:
+          token: ${{ secrets.PACKAGES_PROXY_TOKEN }}
+          require-package-proxy: true
+
       - uses: jdx/mise-action@v5
         with:
           cache: true
