@@ -15,8 +15,9 @@ permissions:
 
 jobs:
   verify:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/node-ci.yml@v0.7.3
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/node-ci.yml@8b5462a796f022647dfc44123ddb3655cc3c2f28 # v0.45.3
     with:
+      require-package-proxy: true
       node-version: '24'
       package-manager: pnpm
       working-directory: '.'

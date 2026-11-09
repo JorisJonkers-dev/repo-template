@@ -15,13 +15,15 @@ permissions:
 
 jobs:
   verify:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/python-ci.yml@v0.7.3
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/python-ci.yml@8b5462a796f022647dfc44123ddb3655cc3c2f28 # v0.45.3
     with:
+      require-package-proxy: true
       python-version: '3.13'
       working-directory: '.'
       install-command: python -m pip install -r requirements-dev.txt
       lint-command: ruff check .
       test-command: python -m unittest discover
+    secrets: inherit
 
   pipeline-complete:
     name: Pipeline Complete

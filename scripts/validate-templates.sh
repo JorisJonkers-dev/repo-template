@@ -158,14 +158,22 @@ for rel in "${released_workflow_template_files[@]}"; do
     || fail "$rel must include the Pipeline Complete aggregator"
   grep -F "re-actors/alls-green@release/v1" "$rel" >/dev/null \
     || fail "$rel must aggregate reusable workflow jobs"
-  grep -E "JorisJonkers-dev/github-workflows/.github/workflows/.+@v0\\.7\\.3" "$rel" >/dev/null \
-    || fail "$rel must pin released reusable workflows to v0.7.3"
+  grep -E "JorisJonkers-dev/github-workflows/.github/workflows/.+@8b5462a796f022647dfc44123ddb3655cc3c2f28 # v0\\.45\\.3" "$rel" >/dev/null \
+    || fail "$rel must pin released reusable workflows to v0.45.3 by SHA"
+  if grep -E "uses: JorisJonkers-dev/github-workflows/.github/workflows/(jvm-ci|node-ci|python-ci|docker-image-ci)\\.yml@" "$rel" >/dev/null; then
+    grep -F "require-package-proxy: true" "$rel" >/dev/null \
+      || fail "$rel must require the package proxy on installing reusable workflows"
+    grep -E "secrets: inherit|PACKAGES_PROXY_TOKEN" "$rel" >/dev/null \
+      || fail "$rel must pass PACKAGES_PROXY_TOKEN to installing reusable workflows"
+  fi
 done
 for rel in "${placeholder_workflow_template_files[@]}"; do
   [[ -f "$rel" ]] || fail "missing workflow caller template: $rel"
   grep -F "@{{github_workflows_ref}}" "$rel" >/dev/null \
     || fail "$rel must require a rendered published github-workflows ref"
 done
+grep -F "package-proxy-guard: enforce" templates/workflows/repository-hygiene.yml.tmpl >/dev/null \
+  || fail "the repository-hygiene caller template must run the package proxy guard in enforce mode"
 if rg -n 'JorisJonkers-dev/github-workflows/.github/workflows/.+@(main|master|HEAD)' templates/workflows; then
   fail "reusable workflow templates must not use moving refs"
 fi

@@ -15,5 +15,6 @@ jobs:
   repository-hygiene:
     uses: JorisJonkers-dev/github-workflows/.github/workflows/repository-hygiene-guard.yml@{{github_workflows_ref}}
     with:
+      package-proxy-guard: enforce
       allowlist-regex: '{{hygiene_allowlist_regex}}'
     secrets: inherit

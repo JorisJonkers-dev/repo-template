@@ -50,7 +50,7 @@ jobs:
   # A skipped test whose quarantine ran out, names no issue, or lasts over 14 days fails the build
   # (workspace docs/testing-standards.md, section 7). A reusable workflow, so its own job.
   quarantine:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/quarantine-check.yml@ab93bf1c435304c5933ab33f9febe087ff8be214 # v0.43.0
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/quarantine-check.yml@8b5462a796f022647dfc44123ddb3655cc3c2f28 # v0.45.3
 
   pipeline-complete:
     name: Pipeline Complete
