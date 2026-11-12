@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/JorisJonkers-dev/repo-template/compare/v1.6.0...v1.6.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **hygiene:** never cancel a run of the required hygiene checks ([#52](https://github.com/JorisJonkers-dev/repo-template/issues/52)) ([bfafeba](https://github.com/JorisJonkers-dev/repo-template/commit/bfafeba30532d4402bb07ecbb3836e2fde15b375))
+
 ## [1.6.0](https://github.com/JorisJonkers-dev/repo-template/compare/v1.5.0...v1.6.0) (2026-10-21)
 
 
