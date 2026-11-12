@@ -174,6 +174,9 @@ for rel in "${placeholder_workflow_template_files[@]}"; do
 done
 grep -F "package-proxy-guard: enforce" templates/workflows/repository-hygiene.yml.tmpl >/dev/null \
   || fail "the repository-hygiene caller template must run the package proxy guard in enforce mode"
+grep -F '}}-${{ github.run_id }}' templates/workflows/repository-hygiene.yml.tmpl >/dev/null \
+  && grep -F 'cancel-in-progress: false' templates/workflows/repository-hygiene.yml.tmpl >/dev/null \
+  || fail "the repository-hygiene caller template must never cancel a run: a cancelled run of a required check on the head commit blocks the merge"
 if rg -n 'JorisJonkers-dev/github-workflows/.github/workflows/.+@(main|master|HEAD)' templates/workflows; then
   fail "reusable workflow templates must not use moving refs"
 fi
