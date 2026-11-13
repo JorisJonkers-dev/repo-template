@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.2](https://github.com/JorisJonkers-dev/repo-template/compare/v1.6.1...v1.6.2) (2026-11-13)
+
+
+### Bug Fixes
+
+* **ci:** cancel superseded runs, keep main uncancelled, stop label-triggered runs ([#55](https://github.com/JorisJonkers-dev/repo-template/issues/55)) ([ce72b67](https://github.com/JorisJonkers-dev/repo-template/commit/ce72b67d2bcdd807dd35e4b7647b17149d2779e3))
+* **ci:** pin every template action by commit SHA ([#57](https://github.com/JorisJonkers-dev/repo-template/issues/57)) ([8ec6488](https://github.com/JorisJonkers-dev/repo-template/commit/8ec6488f7222162b02fb42a399211e0a736776a9))
+
 ## [1.6.1](https://github.com/JorisJonkers-dev/repo-template/compare/v1.6.0...v1.6.1) (2026-11-12)
 
 
