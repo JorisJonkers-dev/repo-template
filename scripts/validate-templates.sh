@@ -174,9 +174,18 @@ for rel in "${placeholder_workflow_template_files[@]}"; do
 done
 grep -F "package-proxy-guard: enforce" templates/workflows/repository-hygiene.yml.tmpl >/dev/null \
   || fail "the repository-hygiene caller template must run the package proxy guard in enforce mode"
-grep -F '}}-${{ github.run_id }}' templates/workflows/repository-hygiene.yml.tmpl >/dev/null \
-  && grep -F 'cancel-in-progress: false' templates/workflows/repository-hygiene.yml.tmpl >/dev/null \
-  || fail "the repository-hygiene caller template must never cancel a run: a cancelled run of a required check on the head commit blocks the merge"
+hygiene_tmpl=templates/workflows/repository-hygiene.yml.tmpl
+grep -F "github.event.action == 'edited' && github.run_id" "$hygiene_tmpl" >/dev/null \
+  && grep -F 'cancel-in-progress: true' "$hygiene_tmpl" >/dev/null \
+  || fail "the repository-hygiene caller template must cancel superseded runs per pull request and give title edits their own group"
+if grep -E '^\s+- (labeled|unlabeled)\s*$' "$hygiene_tmpl" >/dev/null; then
+  fail "the repository-hygiene caller template must not run on label events: every label a bot adds would start another run"
+fi
+for rel in templates/workflows/*-ci.yml.tmpl templates/go-service/workflows/ci.yml.tmpl .github/workflows/ci.yml; do
+  grep -F "github.ref == 'refs/heads/main' && github.sha || github.ref" "$rel" >/dev/null \
+    && grep -F "cancel-in-progress: \${{ github.ref != 'refs/heads/main' }}" "$rel" >/dev/null \
+    || fail "$rel must cancel superseded runs on a branch and never cancel a run on main (group by sha there)"
+done
 if rg -n 'JorisJonkers-dev/github-workflows/.github/workflows/.+@(main|master|HEAD)' templates/workflows; then
   fail "reusable workflow templates must not use moving refs"
 fi

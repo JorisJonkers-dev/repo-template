@@ -78,6 +78,37 @@
     scripts/validate-templates.sh
     ```
 
+## Concurrency: superseded runs, labels and documentation-only changes
+
+Runners are limited, so a pile of runs for three consecutive commits on one
+branch is waste. Every workflow here follows one design:
+
+- **A new commit cancels the older run on the same branch.** The group is the
+  pull request (or the ref) and `cancel-in-progress` is
+  `${{ github.ref != 'refs/heads/main' }}`. The head commit always has a fresh
+  run, so a cancelled older run never blocks the merge.
+- **Main is never cancelled.** On `main` the group includes the commit SHA, so
+  every commit keeps its run to the end: main always has a finished run and its
+  caches are saved. (Grouping main by ref would let a third push replace a
+  queued run.)
+- **A title edit gets its own group** (`hygiene` caller: the `edited` action
+  adds `github.run_id` to the group), so it neither cancels nor is cancelled by
+  a push.
+- **Labels do not trigger runs.** Bots label and edit a pull request right after
+  it opens, and with `labeled`/`unlabeled` triggers every label would start
+  another full run. The hygiene override label must therefore be on the pull
+  request when it is opened. If a label is added or removed later, the result is
+  stale: re-run the workflow by hand (Actions, Re-run all jobs).
+- **Documentation-only changes may skip the heavy jobs.** In a repository
+  with heavy builds, add a `changes` job that diffs the base against the head and
+  gate each heavy job on its output. `Pipeline Complete` still runs
+  (`if: ${{ !cancelled() }}`) and still fails on any failed or skipped job; the
+  only skips it tolerates are the ones that are expected (for example the
+  pull-request-only jobs on a push, or the heavy jobs when `changes` reports
+  documentation only). Never loosen the gate to "not failed".
+
+Existing repositories keep the old pattern until they copy these blocks.
+
 ## What this template provides
 
 | File | Purpose |
