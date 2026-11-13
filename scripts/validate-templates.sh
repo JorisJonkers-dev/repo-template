@@ -156,7 +156,7 @@ for rel in "${released_workflow_template_files[@]}"; do
   [[ -f "$rel" ]] || fail "missing workflow caller template: $rel"
   grep -F "Pipeline Complete" "$rel" >/dev/null \
     || fail "$rel must include the Pipeline Complete aggregator"
-  grep -F "re-actors/alls-green@release/v1" "$rel" >/dev/null \
+  grep -E "re-actors/alls-green@[0-9a-f]{40} # v1" "$rel" >/dev/null \
     || fail "$rel must aggregate reusable workflow jobs"
   grep -E "JorisJonkers-dev/github-workflows/.github/workflows/.+@8b5462a796f022647dfc44123ddb3655cc3c2f28 # v0\\.45\\.3" "$rel" >/dev/null \
     || fail "$rel must pin released reusable workflows to v0.45.3 by SHA"
@@ -189,6 +189,41 @@ done
 if rg -n 'JorisJonkers-dev/github-workflows/.github/workflows/.+@(main|master|HEAD)' templates/workflows; then
   fail "reusable workflow templates must not use moving refs"
 fi
+
+log "checking that every action is pinned by full commit SHA"
+python3 - "$ROOT" <<'PY'
+import pathlib
+import re
+import sys
+
+# A repository that requires actions to be pinned to a full-length commit SHA
+# fails at startup on any other `uses:`. Allowed exceptions: local `./` paths,
+# `docker://` references, and the {{github_workflows_ref}} placeholder that
+# bootstrap renders to a published github-workflows tag or SHA.
+root = pathlib.Path(sys.argv[1])
+uses_re = re.compile(r"""^\s*(?:-\s+)?['"]?uses['"]?\s*:\s*['"]?([^'"\s#]+)""")
+sha_re = re.compile(r"@[0-9a-f]{40}$")
+files = sorted(
+    list((root / ".github/workflows").glob("*.yml"))
+    + list((root / "templates").glob("**/*.yml.tmpl"))
+    + list((root / "templates").glob("**/*.yaml.tmpl"))
+)
+bad = []
+for path in files:
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        match = uses_re.match(line)
+        if not match:
+            continue
+        ref = match.group(1)
+        if ref.startswith(("./", "docker://")) or ref.endswith("@{{github_workflows_ref}}"):
+            continue
+        if "@" not in ref:
+            continue
+        if not sha_re.search(ref):
+            bad.append(f"{path.relative_to(root)}:{number}: {ref}")
+if bad:
+    raise SystemExit("actions must be pinned by full commit SHA:\n  " + "\n  ".join(bad))
+PY
 
 log "checking hook shell syntax"
 bash -n scripts/install-git-hooks.sh templates/push-protection/hooks/*
