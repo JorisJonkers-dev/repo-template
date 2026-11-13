@@ -71,6 +71,13 @@
     relevant file from `templates/workflows/` after replacing
     `{{github_workflows_ref}}` with a published `github-workflows` tag. The
     reusable workflow must exist at that tag.
+    The caller templates and every action in them are pinned by full commit
+    SHA (`uses: owner/repo@<40-hex> # vX.Y.Z`), so repositories created from
+    this template work with the repository setting "Require actions to be
+    pinned to a full-length commit SHA"; with a tag or branch ref the workflow
+    fails at startup, before any job runs. Renovate keeps the pins current: it
+    reads the version comment and bumps SHA and comment together.
+    `scripts/validate-templates.sh` fails on any other `uses:`.
 14. **Review Docker pattern skeletons** in `templates/docker-patterns/` only as
     design references. They are not production Dockerfiles.
 15. **Validate template assets**:
